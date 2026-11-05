@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { Transaction } from '@/types';
 import { formatDate, formatCurrency, softColor } from '@/utils/format';
-import { PencilIcon, TrashIcon, ReceiptIcon } from '@/components/icons';
+import { PencilIcon, TrashIcon, ReceiptIcon, RepeatIcon } from '@/components/icons';
 import { IconButton } from '@/components/ui/Button';
 
 interface TransactionListProps {
@@ -51,7 +51,12 @@ export function TransactionList({ data, currency, onEdit, onDelete, showActions 
             <li key={transaction._id} className="flex items-center gap-3 px-4 py-3">
               <CategoryChip transaction={transaction} />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[14.5px] font-medium text-ink">{name}</p>
+                <p className="truncate text-[14.5px] font-medium text-ink">
+                  {name}
+                  {transaction.recurring && (
+                    <RepeatIcon aria-label="Recurring" className="ml-1 inline h-3.5 w-3.5 shrink-0 align-[-2px] text-ink-3" />
+                  )}
+                </p>
                 <p className="truncate text-[12.5px] text-ink-2">
                   {note || formatDate(transaction.date)}
                 </p>
@@ -101,7 +106,12 @@ export function TransactionList({ data, currency, onEdit, onDelete, showActions 
                   <div className="flex items-center gap-3">
                     <CategoryChip transaction={transaction} />
                     <div className="min-w-0">
-                      <p className="text-[14.5px] font-medium text-ink">{name}</p>
+                      <p className="text-[14.5px] font-medium text-ink">
+                        {name}
+                        {transaction.recurring && (
+                          <RepeatIcon aria-label="Recurring" className="ml-1 inline h-3.5 w-3.5 shrink-0 align-[-2px] text-ink-3" />
+                        )}
+                      </p>
                       {note && <p className="truncate text-[12.5px] text-ink-2">{note}</p>}
                     </div>
                   </div>
@@ -147,7 +157,12 @@ export function RecentRow({ transaction, currency }: { transaction: Transaction;
     <li className="flex items-center gap-3 px-4 py-3">
       <CategoryChip transaction={transaction} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[14.5px] font-medium text-ink">{note || name}</p>
+        <p className="truncate text-[14.5px] font-medium text-ink">
+          {note || name}
+          {transaction.recurring && (
+            <RepeatIcon aria-label="Recurring" className="ml-1 inline h-3.5 w-3.5 shrink-0 align-[-2px] text-ink-3" />
+          )}
+        </p>
         <p className="text-[12.5px] text-ink-2">
           {name} · {formatDate(transaction.date)}
         </p>

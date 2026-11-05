@@ -8,6 +8,7 @@ import authRoutes from './routes/authRoutes';
 import transactionRoutes from './routes/transactionRoutes';
 import categoryRoutes from './routes/categoryRoutes';
 import budgetRoutes from './routes/budgetRoutes';
+import recurringRoutes from './routes/recurringRoutes';
 import statsRoutes from './routes/statsRoutes';
 import { generalLimiter } from './middleware/rateLimiter';
 import { notFound, errorHandler } from './middleware/errorMiddleware';
@@ -48,6 +49,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/budgets', budgetRoutes);
+app.use('/api/recurring', recurringRoutes);
 app.use('/api/stats', statsRoutes);
 
 // 404 + centralized error handling

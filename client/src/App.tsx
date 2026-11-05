@@ -10,6 +10,7 @@ import Dashboard from '@/pages/Dashboard';
 import Transactions from '@/pages/Transactions';
 import Categories from '@/pages/Categories';
 import Budgets from '@/pages/Budgets';
+import Recurring from '@/pages/Recurring';
 import Reports from '@/pages/Reports';
 import Profile from '@/pages/Profile';
 import NotFound from '@/pages/NotFound';
@@ -30,6 +31,7 @@ export default function App() {
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/budgets" element={<Budgets />} />
+              <Route path="/recurring" element={<Recurring />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/profile" element={<Profile />} />
             </Route>

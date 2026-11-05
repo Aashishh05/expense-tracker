@@ -2,12 +2,13 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/utils/format';
 import { toggleTheme, useTheme } from '@/utils/theme';
-import { WalletIcon, HomeIcon, ReceiptIcon, TagIcon, TargetIcon, ChartIcon, UserIcon, PlusIcon, LogoutIcon, SunIcon, MoonIcon } from '@/components/icons';
+import { WalletIcon, HomeIcon, ReceiptIcon, TagIcon, TargetIcon, ChartIcon, UserIcon, PlusIcon, LogoutIcon, SunIcon, MoonIcon, RepeatIcon } from '@/components/icons';
 const desktopNav = [
   { to: '/', label: 'Dashboard', icon: HomeIcon, end: true },
   { to: '/transactions', label: 'Transactions', icon: ReceiptIcon },
   { to: '/categories', label: 'Categories', icon: TagIcon },
   { to: '/budgets', label: 'Budgets', icon: TargetIcon },
+  { to: '/recurring', label: 'Recurring', icon: RepeatIcon },
   { to: '/reports', label: 'Reports', icon: ChartIcon },
   { to: '/profile', label: 'Profile', icon: UserIcon },
 ];

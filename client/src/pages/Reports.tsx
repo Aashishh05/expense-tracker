@@ -7,6 +7,7 @@ import { FullPageLoader, Skeleton } from '@/components/ui/Loader';
 import { ExpensePieChart } from '@/components/charts/ExpensePieChart';
 import { MonthlyBarChart } from '@/components/charts/MonthlyBarChart';
 import { IconButton } from '@/components/ui/Button';
+import { RateNote } from '@/components/ui/RateNote';
 import { ChevronLeftIcon, ChevronRightIcon } from '@/components/icons';
 import {
   apiMessage,
@@ -68,6 +69,7 @@ export default function Reports() {
           <p className="mt-0.5 text-[13.5px] text-ink-2">Where your money went — month by month</p>
         </div>
       </header>
+      <RateNote className="-mt-3.5 mb-5" />
 
       {/* Month summary strip */}
       <div className="card mb-4 grid grid-cols-1 divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">

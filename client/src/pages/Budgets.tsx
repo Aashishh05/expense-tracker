@@ -13,6 +13,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/Loader';
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, TargetIcon, PencilIcon, TrashIcon } from '@/components/icons';
 import { apiMessage, cn, formatCurrency, currentMonthKey, monthLabel, shiftMonth, softColor } from '@/utils/format';
+import { RateNote } from '@/components/ui/RateNote';
 
 export default function Budgets() {
   const { user } = useAuth();
@@ -104,6 +105,7 @@ export default function Budgets() {
           </Button>
         </div>
       </header>
+      <RateNote className="-mt-3.5 mb-5" />
 
       {loading ? (
         <div className="space-y-3" aria-hidden="true">

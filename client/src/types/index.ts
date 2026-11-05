@@ -26,6 +26,24 @@ export interface Transaction {
   category: Category | null;
   date: string;
   note?: string;
+  /** Present when this entry was auto-created by a recurring rule. */
+  recurring?: string;
+}
+
+export type RecurringFrequency = 'daily' | 'weekly' | 'monthly';
+
+export interface Recurring {
+  _id: string;
+  type: TransactionType;
+  amount: number;
+  category: Category | null;
+  note?: string;
+  frequency: RecurringFrequency;
+  startDate: string;
+  endDate?: string | null;
+  nextRunAt: string;
+  lastRunAt?: string | null;
+  active: boolean;
 }
 
 export interface Pagination {

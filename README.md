@@ -19,6 +19,10 @@ budgets, and see where your money goes through summaries and charts.
   pre-paint restore with no flash, theme-aware charts and navigational chrome
 - **CSV export** — download all transactions or the currently filtered set as an Excel-friendly
   UTF-8 CSV from the Transactions page
+- **Recurring transactions** — daily / weekly / monthly rules that log entries automatically,
+  even when the app is closed (a boot + 10-minute sweep materializes due occurrences with catch-up)
+- **Multi-currency** — display every amount in any of the 26 supported currencies, converted at
+  render time from the NPR base using a clearly-dated static rate snapshot
 - **Security** — bcrypt hashing, input validation, rate limiting, helmet, CORS, mongo-sanitize
 - Apple-style light & dark UI: system fonts, translucent nav, subtle motion, reduced-motion
   support, responsive from mobile (bottom tab bar) to desktop (sidebar)
@@ -43,6 +47,7 @@ expense-tracker/
 │   │   │   ├── transactionController.ts # CRUD + filters + pagination
 │   │   │   ├── categoryController.ts    # defaults + custom CRUD (usage counts)
 │   │   │   ├── budgetController.ts      # monthly upsert + spent aggregation
+│   │   │   ├── recurringController.ts   # recurring rules: CRUD + due materialization
 │   │   │   └── statsController.ts       # summary / by-category / monthly
 │   │   ├── middleware/
 │   │   │   ├── authMiddleware.ts        # JWT verify → req.user
@@ -52,19 +57,22 @@ expense-tracker/
 │   │   ├── models/
 │   │   │   ├── User.ts                  # hashed password, toJSON strip, comparePassword
 │   │   │   ├── Category.ts              # user: null = shared default
-│   │   │   ├── Transaction.ts           # indexes {user+date}, {user+category}
-│   │   │   └── Budget.ts                # unique (user, category, month)
+│   │   │   ├── Transaction.ts           # + dedupe index (user+recurring+date)
+│   │   │   ├── Budget.ts                # unique (user, category, month)
+│   │   │   └── Recurring.ts             # daily/weekly/monthly templates
 │   │   ├── routes/
 │   │   │   ├── authRoutes.ts
 │   │   │   ├── transactionRoutes.ts
 │   │   │   ├── categoryRoutes.ts
 │   │   │   ├── budgetRoutes.ts
+│   │   │   ├── recurringRoutes.ts
 │   │   │   └── statsRoutes.ts
 │   │   ├── validators/                  # (+) express-validator chains
 │   │   │   ├── authValidators.ts
 │   │   │   ├── transactionValidators.ts
 │   │   │   ├── categoryValidators.ts
 │   │   │   ├── budgetValidators.ts
+│   │   │   ├── recurringValidators.ts
 │   │   │   └── statsValidators.ts
 │   │   ├── types/
 │   │   │   └── express.d.ts             # (+) typed req.user via declaration merging
@@ -72,9 +80,10 @@ expense-tracker/
 │   │   │   ├── generateToken.ts
 │   │   │   ├── asyncHandler.ts          # (+) async error forwarding
 │   │   │   ├── dates.ts                 # (+) YYYY-MM-DD / month / year helpers
+│   │   │   ├── recurrence.ts            # (+) occurrence math + due sweep
 │   │   │   └── defaultCategories.ts     # (+) idempotent seed (runs on boot)
 │   │   ├── app.ts                       # express wiring: helmet, cors, sanitize, routes
-│   │   └── server.ts                    # entry: connectDB → seed → listen
+│   │   └── server.ts                    # entry: connectDB → seed → recurring sweep → listen
 │   ├── tsconfig.json                    # strict TS, CommonJS output → dist/
 │   ├── package.json                     # dev: tsx watch · build: tsc · start: node dist
 │   ├── .env.example
@@ -96,7 +105,8 @@ expense-tracker/
         │   ├── transactions.ts
         │   ├── categories.ts
         │   ├── stats.ts
-        │   └── budgets.ts
+        │   ├── budgets.ts
+        │   └── recurring.ts             # (+) recurring rules API
         ├── components/
         │   ├── icons.tsx                # (+) single 1.7px-stroke SVG icon set
         │   ├── layout/
@@ -108,14 +118,17 @@ expense-tracker/
         │   │   ├── Loader.tsx           # Loader / FullPageLoader / Skeleton
         │   │   ├── EmptyState.tsx
         │   │   ├── ConfirmDialog.tsx
+        │   │   ├── RateNote.tsx            # (+) conversion-snapshot notice
         │   │   └── Pagination.tsx
         │   ├── charts/
         │   │   ├── ExpensePieChart.tsx  # donut by category
         │   │   └── MonthlyBarChart.tsx  # income vs. expense per month
-        │   └── transactions/
+        │   ├── transactions/
         │       ├── TransactionForm.tsx  # create/edit modal form
         │       ├── FilterBar.tsx        # search + filters + clear
         │       └── TransactionList.tsx  # table (desktop) / cards (mobile)
+        │   └── recurring/
+        │       └── RecurringForm.tsx    # (+) rule create/edit modal
         ├── context/
         │   └── AuthContext.tsx          # user, token, login/register/logout, useAuth
         ├── hooks/
@@ -129,6 +142,7 @@ expense-tracker/
         │   ├── Transactions.tsx
         │   ├── Categories.tsx
         │   ├── Budgets.tsx
+        │   ├── Recurring.tsx
         │   ├── Reports.tsx
         │   ├── Profile.tsx
         │   └── NotFound.tsx
@@ -139,6 +153,9 @@ expense-tracker/
         │   └── index.ts                 # User, Category, Transaction, Budget, …
         └── utils/
             ├── format.ts                # currency/date formatters + cn helper
+            ├── theme.ts                 # (+) light/dark store + useTheme
+            ├── chartTheme.ts            # (+) SVG-safe themed chart colors
+            ├── currency.ts              # (+) NPR-base rate snapshot + converter
             └── constants.ts             # palettes, currency list
 ```
 
@@ -187,6 +204,7 @@ npm run dev              # → http://localhost:5173
 | Transactions | `GET/POST /transactions` · `GET/PUT/DELETE /transactions/:id` · `GET /transactions/export` (CSV) |
 | Categories   | `GET/POST /categories` · `PUT/DELETE /categories/:id`              |
 | Budgets      | `GET/POST /budgets` · `PUT/DELETE /budgets/:id`                    |
+| Recurring    | `GET/POST /recurring` · `PUT/DELETE /recurring/:id`                |
 | Stats        | `GET /stats/summary` · `GET /stats/by-category` · `GET /stats/monthly` |
 
 All list endpoints support query params (`type`, `category`, `startDate`, `endDate`, `search`,
@@ -202,11 +220,16 @@ Response envelope: `{ "success": true, "data": …, "pagination": … }` — err
 - The token lives in `localStorage` (kept simple per the MVP spec; switch to httpOnly cookies for
   production-grade XSS resistance).
 - `POST /budgets` is an upsert on (user, category, month).
+- Amounts are stored in the NPR base. Display conversion uses the static snapshot in
+  `client/src/utils/currency.ts` (see `RATE_DATE`) — no runtime API. The CSV export always
+  contains base-NPR amounts.
+- Recurring rules are materialized by a boot-time + 10-minute sweep (`utils/recurrence.ts`).
+  Missed occurrences are backfilled on their own dates; a monthly rule on the 31st clamps to
+  shorter months (Feb 28/29). Deleting a rule keeps already-created transactions.
 
 ## Roadmap (Phase 2 ideas)
 
-Recurring transactions · receipt uploads · email/password reset · multi-currency conversion ·
-shared/group expenses · PWA.
+Receipt uploads · email/password reset · shared/group expenses · PWA.
 
 ---
 

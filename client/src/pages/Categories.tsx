@@ -65,7 +65,7 @@ export default function Categories() {
       </header>
 
       {/* Type switch */}
-      <div className="mb-4 inline-flex gap-1 rounded-xl bg-[#f2f2f4] p-1">
+      <div className="mb-4 inline-flex gap-1 rounded-xl bg-ink/[0.06] p-1">
         {(['expense', 'income'] as const).map((value) => (
           <button
             key={value}

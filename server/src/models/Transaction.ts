@@ -9,6 +9,8 @@ export interface ITransaction {
   category: Types.ObjectId;
   date: Date;
   note?: string;
+  /** Set when this entry was auto-created by a recurring rule. */
+  recurring?: Types.ObjectId;
 }
 
 export interface TransactionDocument extends Document<Types.ObjectId>, ITransaction {
@@ -52,12 +54,20 @@ const transactionSchema = new Schema<TransactionDocument>(
       trim: true,
       maxlength: [200, 'Note must be at most 200 characters'],
     },
+    recurring: {
+      type: Schema.Types.ObjectId,
+      ref: 'Recurring',
+      default: undefined,
+    },
   },
   { timestamps: true }
 );
 
 transactionSchema.index({ user: 1, date: -1 });
 transactionSchema.index({ user: 1, category: 1 });
+// Stops a repeated materialization from inserting the same automatic
+// entry twice; sparse so hand-made transactions (no field) are ignored.
+transactionSchema.index({ user: 1, recurring: 1, date: 1 }, { unique: true, sparse: true });
 
 const Transaction = model<TransactionDocument>('Transaction', transactionSchema);
 

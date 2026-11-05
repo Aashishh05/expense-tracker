@@ -1,4 +1,5 @@
 import type { Transaction, TransactionType } from '@/types';
+import { convertFromBase } from './currency';
 
 type ApiErrorResponse = {
   response?: {
@@ -36,26 +37,31 @@ export function softColor(hex: string | undefined): string {
   return hex ? `${hex}1f` : 'rgba(0,0,0,0.06)';
 }
 
-/** "450" / "450.5" -> "NPR 450.00" style, with graceful fallback. */
+/**
+ * Formats an amount for display, converting it from the NPR base into the
+ * chosen display currency (identity when the display currency is NPR).
+ */
 export function formatCurrency(value: number, currency = 'NPR'): string {
+  const converted = convertFromBase(value, currency);
   try {
     return new Intl.NumberFormat('en', {
       style: 'currency',
       currency,
       currencyDisplay: 'narrowSymbol',
-      maximumFractionDigits: Math.abs(value) >= 1000 ? 0 : 2,
-    }).format(value);
+      maximumFractionDigits: Math.abs(converted) >= 1000 ? 0 : 2,
+    }).format(converted);
   } catch {
-    return `${currency} ${Number.isInteger(value) ? value : value.toFixed(2)}`;
+    return `${currency} ${Number.isInteger(converted) ? converted : converted.toFixed(2)}`;
   }
 }
 
-/** Compact axis labels: 50,000 -> "50K". */
-export function compactNumber(value: number): string {
+/** Compact axis labels: 50,000 -> "50K" (converted from the NPR base first). */
+export function compactNumber(value: number, currency = 'NPR'): string {
+  const converted = convertFromBase(value, currency);
   try {
-    return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
+    return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(converted);
   } catch {
-    return String(Math.round(value));
+    return String(Math.round(converted));
   }
 }
 

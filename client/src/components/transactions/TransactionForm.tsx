@@ -111,13 +111,13 @@ export function TransactionForm({
       open={open}
       onClose={onClose}
       title={transaction ? 'Edit transaction' : 'Add transaction'}
-      subtitle={transaction ? undefined : 'Amounts always use your account currency.'}
+      subtitle={transaction ? undefined : 'Typed amounts are in NPR (base); everything converts to your display currency.'}
     >
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         {/* Type segmented control */}
         <div>
           <span className="label">Type</span>
-          <div className="grid grid-cols-2 gap-1 rounded-xl bg-[#f2f2f4] p-1">
+          <div className="grid grid-cols-2 gap-1 rounded-xl bg-ink/[0.06] p-1">
             {TYPE_CHOICES.map((choice) => (
               <button
                 key={choice.value}

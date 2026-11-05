@@ -37,7 +37,7 @@ export function MonthlyBarChart({ data, currency }: MonthlyBarChartProps) {
             interval={0}
           />
           <YAxis
-            tickFormatter={(value: number) => compactNumber(Number(value))}
+            tickFormatter={(value: number) => compactNumber(Number(value), currency)}
             tick={{ fontSize: 11, fill: tickFill }}
             axisLine={false}
             tickLine={false}

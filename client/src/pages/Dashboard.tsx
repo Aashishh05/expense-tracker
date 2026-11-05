@@ -16,6 +16,7 @@ import { ExpensePieChart } from '@/components/charts/ExpensePieChart';
 import { MonthlyBarChart } from '@/components/charts/MonthlyBarChart';
 import { ArrowRightIcon, PlusIcon, TrendUpIcon, TrendDownIcon, ScaleIcon, ChartIcon } from '@/components/icons';
 import { apiMessage, formatCurrency, currentMonthKey, monthEndDay, currentYear, monthLabel } from '@/utils/format';
+import { RateNote } from '@/components/ui/RateNote';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -79,6 +80,7 @@ export default function Dashboard() {
           <span className="sm:hidden">Add</span>
         </Button>
       </header>
+      <RateNote className="-mt-3.5 mb-5" />
 
       {loading ? (
         <DashboardSkeleton />

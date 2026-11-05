@@ -282,3 +282,31 @@ export function DownloadIcon(props: IconProps) {
     </Svg>
   );
 }
+
+export function RepeatIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="m17 2 4 4-4 4" />
+      <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+      <path d="m7 22-4-4 4-4" />
+      <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+    </Svg>
+  );
+}
+
+export function PauseIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M9 5v14" />
+      <path d="M15 5v14" />
+    </Svg>
+  );
+}
+
+export function PlayIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="m7 5 12 7-12 7V5z" />
+    </Svg>
+  );
+}

@@ -14,9 +14,10 @@ import { TransactionForm } from '@/components/transactions/TransactionForm';
 import { FilterBar, type TxnFilterState } from '@/components/transactions/FilterBar';
 import { TransactionList } from '@/components/transactions/TransactionList';
 import { Skeleton } from '@/components/ui/Loader';
-import { PlusIcon, ReceiptIcon, DownloadIcon } from '@/components/icons';
+import { PlusIcon, ReceiptIcon, DownloadIcon, RepeatIcon } from '@/components/icons';
 import { apiMessage, cn } from '@/utils/format';
-import { useLocation } from 'react-router-dom';
+import { RateNote } from '@/components/ui/RateNote';
+import { Link, useLocation } from 'react-router-dom';
 
 const PAGE_LIMIT = 10;
 
@@ -156,6 +157,13 @@ export default function Transactions() {
           <p className="mt-0.5 text-[13.5px] text-ink-2">Every income and expense you've logged</p>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            to="/recurring"
+            className="pressable inline-flex h-10 items-center gap-2 rounded-xl px-3.5 text-[13.5px] font-medium text-ink-2 transition-colors hover:bg-ink/[0.05] hover:text-ink md:hidden"
+          >
+            <RepeatIcon className="h-4.5 w-4.5" />
+            Recurring
+          </Link>
           <Button variant="ghost" onClick={handleExport} loading={exporting}>
             <DownloadIcon className="h-4.5 w-4.5" />
             <span className="hidden sm:inline">Export CSV</span>
@@ -173,6 +181,7 @@ export default function Transactions() {
           </Button>
         </div>
       </header>
+      <RateNote className="-mt-3.5 mb-5" />
 
       <div className="space-y-3 md:space-y-4">
         <FilterBar
