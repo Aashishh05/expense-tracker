@@ -96,7 +96,7 @@ export function TransactionList({ data, currency, onEdit, onDelete, showActions 
           {data.map((transaction) => {
             const { name, note } = categoryMeta(transaction);
             return (
-              <tr key={transaction._id} className="border-b border-line/70 transition-colors last:border-0 hover:bg-black/[0.02]">
+              <tr key={transaction._id} className="border-b border-line/70 transition-colors last:border-0 hover:bg-ink/[0.02]">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <CategoryChip transaction={transaction} />
@@ -169,7 +169,7 @@ export function EmptyTransactions({ href, ctaLabel }: { href: string; ctaLabel: 
     <div className="px-4 md:px-0">
       <div className="card bg-transparent shadow-none border-dashed">
         <div className="flex flex-col items-center gap-2 px-6 py-14 text-center">
-          <div className="mb-1 grid h-12 w-12 place-items-center rounded-2xl bg-black/[0.04] text-ink-3">
+          <div className="mb-1 grid h-12 w-12 place-items-center rounded-2xl bg-ink/[0.04] text-ink-3">
             <ReceiptIcon className="h-6 w-6" />
           </div>
           <p className="text-[15px] font-medium text-ink">No transactions yet</p>

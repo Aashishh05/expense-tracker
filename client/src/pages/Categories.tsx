@@ -116,7 +116,7 @@ export default function Categories() {
                 <p className="flex items-center gap-2 truncate text-[14.5px] font-medium text-ink">
                   {category.name}
                   {category.isDefault && (
-                    <span className="shrink-0 rounded-md bg-black/[0.05] px-1.5 py-0.5 text-[10.5px] font-medium text-ink-2">
+                    <span className="shrink-0 rounded-md bg-ink/[0.05] px-1.5 py-0.5 text-[10.5px] font-medium text-ink-2">
                       Default
                     </span>
                   )}

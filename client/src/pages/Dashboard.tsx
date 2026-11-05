@@ -128,7 +128,7 @@ export default function Dashboard() {
             <section className="card p-5">
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="text-[15.5px] font-semibold">Monthly income vs. expense</h2>
-                <span className="nums rounded-lg bg-black/[0.04] px-2 py-0.5 text-[12px] text-ink-2">
+                <span className="nums rounded-lg bg-ink/[0.04] px-2 py-0.5 text-[12px] text-ink-2">
                   {year}
                 </span>
               </div>
@@ -150,7 +150,7 @@ export default function Dashboard() {
             </div>
             {recent.length === 0 ? (
               <div className="px-4 pb-5 pt-2 text-center md:px-5">
-                <div className="mb-2 grid h-12 w-12 place-items-center rounded-2xl bg-black/[0.04] text-ink-3 mx-auto">
+                <div className="mb-2 grid h-12 w-12 place-items-center rounded-2xl bg-ink/[0.04] text-ink-3 mx-auto">
                   <ChartIcon className="h-6 w-6" />
                 </div>
                 <p className="text-[14.5px] font-medium text-ink">Nothing logged yet this month</p>

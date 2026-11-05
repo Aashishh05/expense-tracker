@@ -242,7 +242,7 @@ function BudgetRow({
         </div>
       </div>
       <div
-        className="h-2 w-full overflow-hidden rounded-full bg-black/[0.06]"
+        className="h-2 w-full overflow-hidden rounded-full bg-ink/[0.06]"
         role="progressbar"
         aria-valuenow={budget.percent}
         aria-valuemin={0}

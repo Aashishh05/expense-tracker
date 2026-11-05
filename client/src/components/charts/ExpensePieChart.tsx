@@ -2,6 +2,7 @@ import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recha
 import type { CategoryStat } from '@/types';
 import { CHART_COLORS } from '@/utils/constants';
 import { formatCurrency } from '@/utils/format';
+import { useChartTooltip, useChartVar } from '@/utils/chartTheme';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PieIcon } from '@/components/icons';
 
@@ -11,6 +12,10 @@ interface ExpensePieChartProps {
 }
 
 export function ExpensePieChart({ data, currency }: ExpensePieChartProps) {
+  // Called before the early return so the hook order stays stable.
+  const cssVar = useChartVar();
+  const tooltipStyle = useChartTooltip();
+
   if (!data.length) {
     return (
       <EmptyState
@@ -27,6 +32,8 @@ export function ExpensePieChart({ data, currency }: ExpensePieChartProps) {
     value: d.total,
     color: d.color || CHART_COLORS[i % CHART_COLORS.length],
   }));
+
+  const legendColor = cssVar('--ink-2', '#6e6e73');
 
   return (
     <div className="h-[280px] w-full">
@@ -50,22 +57,14 @@ export function ExpensePieChart({ data, currency }: ExpensePieChartProps) {
           <Legend
             iconType="circle"
             iconSize={8}
-            wrapperStyle={{ fontSize: 12.5, color: '#6e6e73', paddingTop: 8 }}
+            formatter={(value) => <span style={{ color: legendColor }}>{value}</span>}
+            wrapperStyle={{ fontSize: 12.5, paddingTop: 8 }}
           />
         </PieChart>
       </ResponsiveContainer>
     </div>
   );
 }
-
-export const tooltipStyle = {
-  borderRadius: 12,
-  border: '1px solid #e8e8ed',
-  boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-  background: '#ffffff',
-  fontSize: 13,
-  padding: '8px 12px',
-} as const;
 
 export function currencyFormatter(currency: string) {
   return (value: unknown) => formatCurrency(Number(value), currency);

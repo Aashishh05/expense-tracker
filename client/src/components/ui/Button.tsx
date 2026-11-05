@@ -15,7 +15,7 @@ const variants: Record<Variant, string> = {
   primary: 'bg-accent text-white hover:bg-[#0077ed] disabled:hover:bg-accent',
   secondary: 'bg-accent-soft text-accent hover:bg-[#ddeafd]',
   danger: 'bg-expense text-white hover:bg-[#c92020] disabled:hover:bg-expense',
-  ghost: 'text-ink-2 hover:bg-black/[0.05] hover:text-ink disabled:hover:bg-transparent',
+  ghost: 'text-ink-2 hover:bg-ink/[0.05] hover:text-ink disabled:hover:bg-transparent',
 };
 
 const sizes: Record<Size, string> = {
@@ -62,7 +62,7 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 /** Square icon-only button; `label` becomes the accessible name. */
 export function IconButton({ label, tone = 'default', className, children, ...rest }: IconButtonProps) {
   const tones = {
-    default: 'text-ink-3 hover:bg-black/[0.05] hover:text-ink',
+    default: 'text-ink-3 hover:bg-ink/[0.05] hover:text-ink',
     danger: 'text-ink-3 hover:bg-expense-soft hover:text-expense',
     accent: 'text-ink-3 hover:bg-accent-soft hover:text-accent',
   };

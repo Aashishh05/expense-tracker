@@ -131,7 +131,7 @@ export default function Reports() {
                         {formatCurrency(category.total, currency)} · <span className="nums">{share}%</span>
                       </span>
                     </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-black/[0.05]">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-ink/[0.05]">
                       <div
                         className="h-full rounded-full"
                         style={{ width: `${share}%`, backgroundColor: color || ['#0071e3', '#f59e0b', '#8b5cf6'][index % 3] }}

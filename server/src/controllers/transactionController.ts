@@ -2,6 +2,7 @@ import Transaction from '../models/Transaction';
 import Category, { type CategoryDocument } from '../models/Category';
 import asyncHandler from '../utils/asyncHandler';
 import { dateFilterFromRange } from '../utils/dates';
+import type { Request } from 'express';
 import type { FilterQuery, Types } from 'mongoose';
 import type { ITransaction } from '../models/Transaction';
 import type { CategoryType } from '../models/Category';
@@ -37,12 +38,9 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-// GET /api/transactions?type=&category=&startDate=&endDate=&search=&sort=&page=&limit=
-export const list = asyncHandler(async (req, res) => {
-  const { type, category, search, sort } = req.query as Record<string, string | undefined>;
-  const page = clamp(Number(req.query.page) || 1, 1, 10000);
-  const limit = clamp(Number(req.query.limit) || 10, 1, 100);
-  const skip = (page - 1) * limit;
+/** Shared filter build for the list endpoint and the CSV export. */
+function buildListFilter(req: Request): FilterQuery<ITransaction> {
+  const { type, category, search } = req.query as Record<string, string | undefined>;
 
   const filter: FilterQuery<ITransaction> = { user: req.user._id };
   if (type) filter.type = type as CategoryType;
@@ -51,6 +49,17 @@ export const list = asyncHandler(async (req, res) => {
 
   const dateFilter = dateFilterFromRange(req.query.startDate, req.query.endDate);
   if (dateFilter) filter.date = dateFilter;
+  return filter;
+}
+
+// GET /api/transactions?type=&category=&startDate=&endDate=&search=&sort=&page=&limit=
+export const list = asyncHandler(async (req, res) => {
+  const { sort } = req.query as Record<string, string | undefined>;
+  const page = clamp(Number(req.query.page) || 1, 1, 10000);
+  const limit = clamp(Number(req.query.limit) || 10, 1, 100);
+  const skip = (page - 1) * limit;
+
+  const filter = buildListFilter(req);
 
   const [items, total] = await Promise.all([
     Transaction.find(filter)
@@ -72,6 +81,41 @@ export const list = asyncHandler(async (req, res) => {
       pages: Math.max(1, Math.ceil(total / limit)),
     },
   });
+});
+
+/** Escapes one CSV field (commas, quotes, newlines). */
+function csvCell(value: unknown): string {
+  const text = value === null || value === undefined ? '' : String(value);
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+// GET /api/transactions/export — CSV download honoring the same filters as list.
+export const exportCsv = asyncHandler(async (req, res) => {
+  const items = await Transaction.find(buildListFilter(req))
+    .populate('category', CATEGORY_FIELDS)
+    .sort(buildSort(req.query.sort))
+    .limit(10000)
+    .lean();
+
+  const rows: string[] = ['Date,Type,Category,Amount,Note'];
+  for (const item of items) {
+    const category = item.category as unknown as { name?: string } | undefined;
+    rows.push(
+      [
+        csvCell((item.date as Date).toISOString().slice(0, 10)),
+        csvCell(item.type),
+        csvCell(category?.name ?? ''),
+        csvCell(item.amount),
+        csvCell(item.note ?? ''),
+      ].join(',')
+    );
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="transactions-${today}.csv"`);
+  // A leading BOM keeps Excel reading the file as UTF-8.
+  res.send(`\uFEFF${rows.join('\r\n')}\r\n`);
 });
 
 // POST /api/transactions

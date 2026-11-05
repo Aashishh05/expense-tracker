@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { deleteTransaction } from '@/api/transactions';
+import { deleteTransaction, exportTransactionsCsv } from '@/api/transactions';
 import type { Transaction } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { useCategories } from '@/hooks/useCategories';
@@ -14,7 +14,7 @@ import { TransactionForm } from '@/components/transactions/TransactionForm';
 import { FilterBar, type TxnFilterState } from '@/components/transactions/FilterBar';
 import { TransactionList } from '@/components/transactions/TransactionList';
 import { Skeleton } from '@/components/ui/Loader';
-import { PlusIcon, ReceiptIcon } from '@/components/icons';
+import { PlusIcon, ReceiptIcon, DownloadIcon } from '@/components/icons';
 import { apiMessage, cn } from '@/utils/format';
 import { useLocation } from 'react-router-dom';
 
@@ -54,6 +54,7 @@ export default function Transactions() {
   const wantsNew = (location.state as Record<string, unknown> | null)?.add === true;
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
   const [deletePending, setDeletePending] = useState(false);
 
@@ -102,6 +103,33 @@ export default function Transactions() {
     setFormOpen(true);
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const blob = await exportTransactionsCsv({
+        type: filters.type,
+        category: filters.category || undefined,
+        startDate: filters.startDate || undefined,
+        endDate: filters.endDate || undefined,
+        search: filters.search || undefined,
+        sort: '-date',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `transactions-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      toast.success('CSV exported');
+    } catch (err) {
+      toast.error(apiMessage(err, 'Could not export the CSV'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     setDeletePending(true);
@@ -127,16 +155,23 @@ export default function Transactions() {
           <h1 className="text-[22px] font-semibold tracking-tight md:text-2xl">Transactions</h1>
           <p className="mt-0.5 text-[13.5px] text-ink-2">Every income and expense you've logged</p>
         </div>
-        <Button
-          onClick={() => {
-            setEditing(null);
-            setFormOpen(true);
-          }}
-        >
-          <PlusIcon className="h-4.5 w-4.5" />
-          <span className="hidden sm:inline">Add transaction</span>
-          <span className="sm:hidden">Add</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" onClick={handleExport} loading={exporting}>
+            <DownloadIcon className="h-4.5 w-4.5" />
+            <span className="hidden sm:inline">Export CSV</span>
+            <span className="sm:hidden">CSV</span>
+          </Button>
+          <Button
+            onClick={() => {
+              setEditing(null);
+              setFormOpen(true);
+            }}
+          >
+            <PlusIcon className="h-4.5 w-4.5" />
+            <span className="hidden sm:inline">Add transaction</span>
+            <span className="sm:hidden">Add</span>
+          </Button>
+        </div>
       </header>
 
       <div className="space-y-3 md:space-y-4">

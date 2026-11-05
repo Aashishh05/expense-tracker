@@ -15,9 +15,13 @@ budgets, and see where your money goes through summaries and charts.
 - **Budgets** — monthly per-category limits with progress bars and over-budget warnings
 - **Reports** — expense breakdown per month, income vs. expense trend per year
 - **Profile** — update name, currency (26 options), change password
+- **Dark mode** — token-level theming (light/dark), follows system preference on first visit,
+  pre-paint restore with no flash, theme-aware charts and navigational chrome
+- **CSV export** — download all transactions or the currently filtered set as an Excel-friendly
+  UTF-8 CSV from the Transactions page
 - **Security** — bcrypt hashing, input validation, rate limiting, helmet, CORS, mongo-sanitize
-- Apple-style light UI: system fonts, translucent nav, subtle motion, reduced-motion support,
-  responsive from mobile (bottom tab bar) to desktop (sidebar)
+- Apple-style light & dark UI: system fonts, translucent nav, subtle motion, reduced-motion
+  support, responsive from mobile (bottom tab bar) to desktop (sidebar)
 
 ## Project structure
 
@@ -180,7 +184,7 @@ npm run dev              # → http://localhost:5173
 | Area         | Endpoints                                                          |
 | ------------ | ------------------------------------------------------------------ |
 | Auth         | `POST /auth/register` · `POST /auth/login` · `GET /auth/me` · `PUT /auth/profile` · `PUT /auth/password` |
-| Transactions | `GET/POST /transactions` · `GET/PUT/DELETE /transactions/:id`      |
+| Transactions | `GET/POST /transactions` · `GET/PUT/DELETE /transactions/:id` · `GET /transactions/export` (CSV) |
 | Categories   | `GET/POST /categories` · `PUT/DELETE /categories/:id`              |
 | Budgets      | `GET/POST /budgets` · `PUT/DELETE /budgets/:id`                    |
 | Stats        | `GET /stats/summary` · `GET /stats/by-category` · `GET /stats/monthly` |
@@ -201,8 +205,8 @@ Response envelope: `{ "success": true, "data": …, "pagination": … }` — err
 
 ## Roadmap (Phase 2 ideas)
 
-Recurring transactions · CSV export · dark mode · receipt uploads · email/password reset ·
-multi-currency · shared/group expenses · PWA.
+Recurring transactions · receipt uploads · email/password reset · multi-currency conversion ·
+shared/group expenses · PWA.
 
 ---
 

@@ -10,7 +10,8 @@ import {
 } from 'recharts';
 import type { MonthlyStat } from '@/types';
 import { compactNumber } from '@/utils/format';
-import { tooltipStyle, currencyFormatter } from './ExpensePieChart';
+import { useChartTooltip, useChartVar } from '@/utils/chartTheme';
+import { currencyFormatter } from './ExpensePieChart';
 
 interface MonthlyBarChartProps {
   data: MonthlyStat[];
@@ -18,33 +19,55 @@ interface MonthlyBarChartProps {
 }
 
 export function MonthlyBarChart({ data, currency }: MonthlyBarChartProps) {
+  const cssVar = useChartVar();
+  const tooltipStyle = useChartTooltip();
+
+  const tickFill = cssVar('--ink-2', '#6e6e73');
+
   return (
     <div className="h-[280px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 4, left: -14, bottom: 0 }} barGap={4}>
-          <CartesianGrid vertical={false} stroke="rgba(0,0,0,0.055)" />
+          <CartesianGrid vertical={false} stroke={cssVar('--chart-grid', 'rgba(0,0,0,0.055)')} />
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 11, fill: '#6e6e73' }}
-            axisLine={{ stroke: '#e8e8ed' }}
+            tick={{ fontSize: 11, fill: tickFill }}
+            axisLine={{ stroke: cssVar('--line', '#e8e8ed') }}
             tickLine={false}
             interval={0}
           />
           <YAxis
             tickFormatter={(value: number) => compactNumber(Number(value))}
-            tick={{ fontSize: 11, fill: '#6e6e73' }}
+            tick={{ fontSize: 11, fill: tickFill }}
             axisLine={false}
             tickLine={false}
             width={52}
           />
           <Tooltip
-            cursor={{ fill: 'rgba(0,0,0,0.035)' }}
+            cursor={{ fill: cssVar('--chart-cursor', 'rgba(0,0,0,0.035)') }}
             contentStyle={tooltipStyle}
             formatter={currencyFormatter(currency)}
           />
-          <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12.5, color: '#6e6e73' }} />
-          <Bar dataKey="income" name="Income" fill="#16a34a" radius={[5, 5, 0, 0]} maxBarSize={22} />
-          <Bar dataKey="expense" name="Expense" fill="#ef4444" radius={[5, 5, 0, 0]} maxBarSize={22} />
+          <Legend
+            iconType="circle"
+            iconSize={8}
+            formatter={(value) => <span style={{ color: tickFill }}>{value}</span>}
+            wrapperStyle={{ fontSize: 12.5 }}
+          />
+          <Bar
+            dataKey="income"
+            name="Income"
+            fill={cssVar('--income', '#16a34a')}
+            radius={[5, 5, 0, 0]}
+            maxBarSize={22}
+          />
+          <Bar
+            dataKey="expense"
+            name="Expense"
+            fill={cssVar('--expense', '#ef4444')}
+            radius={[5, 5, 0, 0]}
+            maxBarSize={22}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>

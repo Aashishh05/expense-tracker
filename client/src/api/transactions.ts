@@ -52,3 +52,12 @@ export async function updateTransaction(
 export async function deleteTransaction(id: string): Promise<void> {
   await client.delete(`/transactions/${id}`);
 }
+
+/** Downloads the CSV export (respecting the filters) as a Blob. */
+export async function exportTransactionsCsv(filters: TransactionFilters): Promise<Blob> {
+  const response = await client.get('/transactions/export', {
+    params: clean(filters),
+    responseType: 'blob',
+  });
+  return response.data as Blob;
+}

@@ -1,7 +1,8 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/utils/format';
-import { WalletIcon, HomeIcon, ReceiptIcon, TagIcon, TargetIcon, ChartIcon, UserIcon, PlusIcon, LogoutIcon } from '@/components/icons';
+import { toggleTheme, useTheme } from '@/utils/theme';
+import { WalletIcon, HomeIcon, ReceiptIcon, TagIcon, TargetIcon, ChartIcon, UserIcon, PlusIcon, LogoutIcon, SunIcon, MoonIcon } from '@/components/icons';
 const desktopNav = [
   { to: '/', label: 'Dashboard', icon: HomeIcon, end: true },
   { to: '/transactions', label: 'Transactions', icon: ReceiptIcon },
@@ -47,7 +48,7 @@ function NavItem({
       className={({ isActive }) =>
         cn(
           'flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-medium transition-colors duration-150',
-          isActive ? 'bg-accent-soft text-accent' : 'text-ink-2 hover:bg-black/[0.04] hover:text-ink',
+          isActive ? 'bg-accent-soft text-accent' : 'text-ink-2 hover:bg-ink/[0.04] hover:text-ink',
           className
         )
       }
@@ -62,6 +63,7 @@ export default function AppLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
   const onTransactions = location.pathname === '/transactions';
 
   const openAddTransaction = () => {
@@ -96,10 +98,19 @@ export default function AppLayout() {
             </div>
             <button
               type="button"
+              aria-label="Toggle dark mode"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              onClick={toggleTheme}
+              className="pressable grid h-8 w-8 place-items-center rounded-lg text-ink-3 hover:bg-ink/[0.05] hover:text-ink"
+            >
+              {theme === 'dark' ? <SunIcon className="h-[17px] w-[17px]" /> : <MoonIcon className="h-[17px] w-[17px]" />}
+            </button>
+            <button
+              type="button"
               aria-label="Log out"
               title="Log out"
               onClick={logout}
-              className="pressable grid h-8 w-8 place-items-center rounded-lg text-ink-3 hover:bg-black/[0.05] hover:text-expense"
+              className="pressable grid h-8 w-8 place-items-center rounded-lg text-ink-3 hover:bg-ink/[0.05] hover:text-expense"
             >
               <LogoutIcon className="h-[17px] w-[17px]" />
             </button>
@@ -115,13 +126,23 @@ export default function AppLayout() {
           </span>
           <span className="text-[15px] font-semibold tracking-tight">Expense Tracker</span>
         </span>
-        <Link
-          to="/profile"
-          aria-label="Profile"
-          className="pressable grid h-9 w-9 place-items-center rounded-full bg-accent-soft text-[13px] font-semibold text-accent"
-        >
-          {user ? initials(user.name) : '—'}
-        </Link>
+        <span className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="Toggle dark mode"
+            onClick={toggleTheme}
+            className="pressable grid h-9 w-9 place-items-center rounded-full text-ink-2 hover:bg-ink/[0.05] hover:text-ink"
+          >
+            {theme === 'dark' ? <SunIcon className="h-[18px] w-[18px]" /> : <MoonIcon className="h-[18px] w-[18px]" />}
+          </button>
+          <Link
+            to="/profile"
+            aria-label="Profile"
+            className="pressable grid h-9 w-9 place-items-center rounded-full bg-accent-soft text-[13px] font-semibold text-accent"
+          >
+            {user ? initials(user.name) : '—'}
+          </Link>
+        </span>
       </header>
 
       {/* Content — inset for sidebar, bottom padding for the tab bar */}
