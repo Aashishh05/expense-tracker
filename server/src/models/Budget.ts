@@ -1,17 +1,30 @@
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
+import type { Document, Types } from 'mongoose';
 
 const MONTH_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/;
 
-const budgetSchema = new mongoose.Schema(
+export interface IBudget {
+  user: Types.ObjectId;
+  category: Types.ObjectId;
+  month: string;
+  limit: number;
+}
+
+export interface BudgetDocument extends Document<Types.ObjectId>, IBudget {
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const budgetSchema = new Schema<BudgetDocument>(
   {
     user: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
       index: true,
     },
     category: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'Category',
       required: [true, 'Category is required'],
     },
@@ -32,4 +45,6 @@ const budgetSchema = new mongoose.Schema(
 // One budget per user + category + month (upsert friendly).
 budgetSchema.index({ user: 1, category: 1, month: 1 }, { unique: true });
 
-module.exports = mongoose.model('Budget', budgetSchema);
+const Budget = model<BudgetDocument>('Budget', budgetSchema);
+
+export default Budget;

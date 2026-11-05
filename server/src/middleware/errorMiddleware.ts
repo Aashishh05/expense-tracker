@@ -1,16 +1,18 @@
+import type { ErrorRequestHandler, RequestHandler } from 'express';
+
 /** Handles unmatched routes. */
-function notFound(req, res) {
+const notFound: RequestHandler = (req, res) => {
   res.status(404).json({
     success: false,
     message: `Route not found: ${req.method} ${req.originalUrl}`,
   });
-}
+};
 
 /** Centralized error handler — normalizes Mongoose / JWT / duplicate-key errors. */
-function errorHandler(err, req, res, next) {
+const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Something went wrong';
-  let errors;
+  let errors: Array<{ field: string; msg: string }> | undefined;
 
   // Duplicate key error (e.g. email already registered, duplicate category)
   if (err.code === 11000) {
@@ -34,7 +36,11 @@ function errorHandler(err, req, res, next) {
   if (err.name === 'ValidationError') {
     statusCode = 400;
     message = 'Validation failed';
-    errors = Object.values(err.errors || {}).map((e) => ({ field: e.path, msg: e.message }));
+    const validationErrors = Object.values(err.errors || {}) as Array<{ path?: string; message: string }>;
+    errors = validationErrors.map((e) => ({
+      field: e.path ?? '',
+      msg: e.message,
+    }));
   }
 
   // Invalid ObjectId passed as :id
@@ -61,6 +67,6 @@ function errorHandler(err, req, res, next) {
     message,
     ...(errors && { errors }),
   });
-}
+};
 
-module.exports = { notFound, errorHandler };
+export { notFound, errorHandler };

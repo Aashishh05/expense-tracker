@@ -1,9 +1,27 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+import { Schema, model } from 'mongoose';
+import type { Document, Model, Types } from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const EMAIL_REGEX = /^[\w.+-]+@[\w-]+\.[\w.-]+$/;
 
-const userSchema = new mongoose.Schema(
+export interface IUser {
+  name: string;
+  email: string;
+  password: string;
+  currency: string;
+}
+
+/** Instance methods declared on the schema. */
+export interface UserInstanceMethods {
+  comparePassword(candidate: string): Promise<boolean>;
+}
+
+export interface UserDocument extends Document<Types.ObjectId>, IUser, UserInstanceMethods {
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const userSchema = new Schema<UserDocument, Model<UserDocument>, UserInstanceMethods>(
   {
     name: {
       type: String,
@@ -46,16 +64,20 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-userSchema.methods.comparePassword = function (candidate) {
+userSchema.methods.comparePassword = function (this: UserDocument, candidate: string) {
   return bcrypt.compare(candidate, this.password);
 };
 
-// Never leak the password hash in JSON responses
-userSchema.methods.toJSON = function () {
+// Never leak the password hash in JSON responses.
+// Attached via a cast because Document already types `toJSON` and it
+// cannot be redeclared in an extending interface.
+(userSchema.methods as Record<string, unknown>).toJSON = function (this: UserDocument) {
   const obj = this.toObject();
   delete obj.password;
   delete obj.__v;
   return obj;
 };
 
-module.exports = mongoose.model('User', userSchema);
+const User = model<UserDocument, Model<UserDocument>>('User', userSchema);
+
+export default User;

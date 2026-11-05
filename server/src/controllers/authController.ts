@@ -1,9 +1,9 @@
-const User = require('../models/User');
-const generateToken = require('../utils/generateToken');
-const asyncHandler = require('../utils/asyncHandler');
+import User from '../models/User';
+import generateToken from '../utils/generateToken';
+import asyncHandler from '../utils/asyncHandler';
 
 // POST /api/auth/register
-exports.register = asyncHandler(async (req, res) => {
+export const register = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
   const existing = await User.findOne({ email });
@@ -12,7 +12,7 @@ exports.register = asyncHandler(async (req, res) => {
   }
 
   const user = await User.create({ name, email, password });
-  const token = generateToken(user._id);
+  const token = generateToken(String(user._id));
 
   res.status(201).json({
     success: true,
@@ -23,7 +23,7 @@ exports.register = asyncHandler(async (req, res) => {
 });
 
 // POST /api/auth/login
-exports.login = asyncHandler(async (req, res) => {
+export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email }).select('+password');
@@ -31,7 +31,7 @@ exports.login = asyncHandler(async (req, res) => {
     return res.status(401).json({ success: false, message: 'Invalid email or password' });
   }
 
-  const token = generateToken(user._id);
+  const token = generateToken(String(user._id));
 
   res.json({
     success: true,
@@ -42,15 +42,15 @@ exports.login = asyncHandler(async (req, res) => {
 });
 
 // GET /api/auth/me
-exports.getMe = asyncHandler(async (req, res) => {
+export const getMe = asyncHandler(async (req, res) => {
   res.json({ success: true, data: req.user });
 });
 
 // PUT /api/auth/profile
-exports.updateProfile = asyncHandler(async (req, res) => {
-  const updates = {};
-  if (req.body.name !== undefined) updates.name = req.body.name;
-  if (req.body.currency !== undefined) updates.currency = req.body.currency;
+export const updateProfile = asyncHandler(async (req, res) => {
+  const updates: { name?: string; currency?: string } = {};
+  if (req.body.name !== undefined) updates.name = req.body.name as string;
+  if (req.body.currency !== undefined) updates.currency = req.body.currency as string;
 
   const user = await User.findByIdAndUpdate(req.user._id, updates, {
     new: true,
@@ -62,7 +62,7 @@ exports.updateProfile = asyncHandler(async (req, res) => {
 });
 
 // PUT /api/auth/password
-exports.changePassword = asyncHandler(async (req, res) => {
+export const changePassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
 
   const user = await User.findById(req.user._id).select('+password');
@@ -76,7 +76,7 @@ exports.changePassword = asyncHandler(async (req, res) => {
       .json({ success: false, message: 'New password must be different from the current one' });
   }
 
-  user.password = newPassword;
+  user.password = newPassword as string;
   await user.save(); // pre-save hook hashes it
 
   res.json({ success: true, message: 'Password changed' });

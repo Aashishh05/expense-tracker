@@ -1,7 +1,6 @@
-const pkg = require('express-rate-limit');
-const rateLimit = pkg.rateLimit || pkg.default || pkg;
+import { rateLimit } from 'express-rate-limit';
 
-const jsonMessage = (message) => ({ success: false, message });
+const jsonMessage = (message: string) => ({ success: false, message });
 
 /** Global limiter for the whole /api surface. */
 const generalLimiter = rateLimit({
@@ -22,4 +21,4 @@ const authLimiter = rateLimit({
   message: jsonMessage('Too many attempts, please try again in 15 minutes'),
 });
 
-module.exports = { generalLimiter, authLimiter };
+export { generalLimiter, authLimiter };

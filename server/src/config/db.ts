@@ -1,7 +1,7 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 /** Connect to MongoDB. Exits the process if the connection fails. */
-async function connectDB() {
+async function connectDB(): Promise<void> {
   const uri = process.env.MONGO_URI;
   if (!uri) {
     console.error('MONGO_URI is missing in server/.env');
@@ -12,9 +12,10 @@ async function connectDB() {
     const conn = await mongoose.connect(uri);
     console.log(`MongoDB connected: ${conn.connection.host}/${conn.connection.name}`);
   } catch (err) {
-    console.error(`MongoDB connection failed: ${err.message}`);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`MongoDB connection failed: ${message}`);
     process.exit(1);
   }
 }
 
-module.exports = connectDB;
+export default connectDB;

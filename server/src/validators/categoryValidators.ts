@@ -1,4 +1,4 @@
-const { body, param } = require('express-validator');
+import { body, param } from 'express-validator';
 
 const create = [
   body('name')
@@ -37,4 +37,4 @@ const update = [
 
 const idParam = [param('id').isMongoId().withMessage('Invalid category id')];
 
-module.exports = { create, update, idParam };
+export { create, update, idParam };

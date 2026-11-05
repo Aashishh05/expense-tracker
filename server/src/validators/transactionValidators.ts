@@ -1,5 +1,5 @@
-const { body, query, param } = require('express-validator');
-const { DAY_REGEX } = require('../utils/dates');
+import { body, query, param } from 'express-validator';
+import { DAY_REGEX } from '../utils/dates';
 
 const create = [
   body('type')
@@ -66,4 +66,4 @@ const list = [
 
 const idParam = [param('id').isMongoId().withMessage('Invalid transaction id')];
 
-module.exports = { create, update, list, idParam };
+export { create, update, list, idParam };

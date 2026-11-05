@@ -1,20 +1,30 @@
-const Transaction = require('../models/Transaction');
-const Category = require('../models/Category');
-const asyncHandler = require('../utils/asyncHandler');
-const { dateFilterFromRange } = require('../utils/dates');
+import Transaction from '../models/Transaction';
+import Category, { type CategoryDocument } from '../models/Category';
+import asyncHandler from '../utils/asyncHandler';
+import { dateFilterFromRange } from '../utils/dates';
+import type { FilterQuery, Types } from 'mongoose';
+import type { ITransaction } from '../models/Transaction';
+import type { CategoryType } from '../models/Category';
 
 const CATEGORY_FIELDS = 'name type color icon';
 
 /** Verify the category is a default (user: null) or belongs to the user. */
-async function resolveCategory(categoryId, userId) {
+async function resolveCategory(
+  categoryId: string,
+  userId: Types.ObjectId
+): Promise<CategoryDocument | null> {
   return Category.findOne({ _id: categoryId, $or: [{ user: userId }, { user: null }] });
 }
 
-function escapeRegExp(value) {
+function escapeRegExp(value: string): string {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function buildSort(sortParam) {
+interface SortSpec {
+  [field: string]: 1 | -1;
+}
+
+function buildSort(sortParam: unknown): SortSpec {
   const allowed = ['date', 'amount', 'createdAt'];
   const raw = typeof sortParam === 'string' ? sortParam : '-date';
   const desc = raw.startsWith('-');
@@ -23,19 +33,19 @@ function buildSort(sortParam) {
   return { [field]: desc ? -1 : 1 };
 }
 
-function clamp(value, min, max) {
+function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
 // GET /api/transactions?type=&category=&startDate=&endDate=&search=&sort=&page=&limit=
-exports.list = asyncHandler(async (req, res) => {
-  const { type, category, search, sort } = req.query;
+export const list = asyncHandler(async (req, res) => {
+  const { type, category, search, sort } = req.query as Record<string, string | undefined>;
   const page = clamp(Number(req.query.page) || 1, 1, 10000);
   const limit = clamp(Number(req.query.limit) || 10, 1, 100);
   const skip = (page - 1) * limit;
 
-  const filter = { user: req.user._id };
-  if (type) filter.type = type;
+  const filter: FilterQuery<ITransaction> = { user: req.user._id };
+  if (type) filter.type = type as CategoryType;
   if (category) filter.category = category;
   if (search) filter.note = new RegExp(escapeRegExp(search), 'i');
 
@@ -65,7 +75,7 @@ exports.list = asyncHandler(async (req, res) => {
 });
 
 // POST /api/transactions
-exports.create = asyncHandler(async (req, res) => {
+export const create = asyncHandler(async (req, res) => {
   const { type, amount, category, date, note } = req.body;
 
   const categoryDoc = await resolveCategory(category, req.user._id);
@@ -92,7 +102,7 @@ exports.create = asyncHandler(async (req, res) => {
 });
 
 // GET /api/transactions/:id
-exports.getOne = asyncHandler(async (req, res) => {
+export const getOne = asyncHandler(async (req, res) => {
   const transaction = await Transaction.findOne({
     _id: req.params.id,
     user: req.user._id,
@@ -106,7 +116,7 @@ exports.getOne = asyncHandler(async (req, res) => {
 });
 
 // PUT /api/transactions/:id
-exports.update = asyncHandler(async (req, res) => {
+export const update = asyncHandler(async (req, res) => {
   const { type, amount, category, date, note } = req.body;
 
   const transaction = await Transaction.findOne({ _id: req.params.id, user: req.user._id });
@@ -138,7 +148,7 @@ exports.update = asyncHandler(async (req, res) => {
 });
 
 // DELETE /api/transactions/:id
-exports.remove = asyncHandler(async (req, res) => {
+export const remove = asyncHandler(async (req, res) => {
   const transaction = await Transaction.findOneAndDelete({
     _id: req.params.id,
     user: req.user._id,

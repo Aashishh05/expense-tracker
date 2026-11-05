@@ -1,13 +1,29 @@
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
+import type { Document, Types } from 'mongoose';
 
 /**
  * Categories. `user: null` marks shared default categories;
  * user-created custom categories carry the owner's id.
  */
-const categorySchema = new mongoose.Schema(
+export type CategoryType = 'income' | 'expense';
+
+export interface ICategory {
+  user: Types.ObjectId | null;
+  name: string;
+  type: CategoryType;
+  icon?: string;
+  color?: string;
+}
+
+export interface CategoryDocument extends Document<Types.ObjectId>, ICategory {
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const categorySchema = new Schema<CategoryDocument>(
   {
     user: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       default: null,
       index: true,
@@ -36,4 +52,6 @@ const categorySchema = new mongoose.Schema(
 // Defaults (user: null) are unique too.
 categorySchema.index({ user: 1, name: 1, type: 1 }, { unique: true });
 
-module.exports = mongoose.model('Category', categorySchema);
+const Category = model<CategoryDocument>('Category', categorySchema);
+
+export default Category;

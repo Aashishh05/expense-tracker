@@ -1,11 +1,22 @@
-const Budget = require('../models/Budget');
-const Category = require('../models/Category');
-const Transaction = require('../models/Transaction');
-const asyncHandler = require('../utils/asyncHandler');
-const { monthRange, currentMonthKey } = require('../utils/dates');
+import Budget from '../models/Budget';
+import Category from '../models/Category';
+import Transaction from '../models/Transaction';
+import asyncHandler from '../utils/asyncHandler';
+import { monthRange, currentMonthKey } from '../utils/dates';
+import type { Types } from 'mongoose';
+import type { BudgetDocument } from '../models/Budget';
+import type { CategoryDocument } from '../models/Category';
+
+interface SpentRow {
+  _id: Types.ObjectId | null;
+  spent: number;
+}
 
 /** Verify the user can use this category (default or own) and it is an expense category. */
-async function resolveExpenseCategory(categoryId, userId) {
+async function resolveExpenseCategory(
+  categoryId: string,
+  userId: Types.ObjectId
+): Promise<{ category?: CategoryDocument; error?: string }> {
   const category = await Category.findOne({
     _id: categoryId,
     $or: [{ user: userId }, { user: null }],
@@ -16,16 +27,19 @@ async function resolveExpenseCategory(categoryId, userId) {
 }
 
 // GET /api/budgets?month=2026-11
-exports.list = asyncHandler(async (req, res) => {
-  const month = req.query.month || currentMonthKey();
+export const list = asyncHandler(async (req, res) => {
+  const month = (req.query.month as string) || currentMonthKey();
   const range = monthRange(month);
+  if (!range) {
+    return res.status(400).json({ success: false, message: 'Invalid month' });
+  }
 
   const budgets = await Budget.find({ user: req.user._id, month }).populate(
     'category',
     'name type color icon'
   );
 
-  const spentRows = await Transaction.aggregate([
+  const spentRows = await Transaction.aggregate<SpentRow>([
     {
       $match: {
         user: req.user._id,
@@ -35,15 +49,18 @@ exports.list = asyncHandler(async (req, res) => {
     },
     { $group: { _id: '$category', spent: { $sum: '$amount' } } },
   ]);
-  const spentMap = new Map(spentRows.map((r) => [String(r._id), r.spent]));
+  const spentMap = new Map<string, number>(
+    spentRows.map((r): [string, number] => [String(r._id), r.spent])
+  );
 
   const data = budgets.map((b) => {
-    const spent = spentMap.get(String(b.category._id)) || 0;
+    const budget = b as unknown as BudgetDocument & { category: CategoryDocument };
+    const spent = spentMap.get(String(budget.category._id)) || 0;
     return {
-      ...b.toObject(),
+      ...budget.toObject(),
       spent,
-      remaining: b.limit - spent,
-      percent: b.limit > 0 ? Math.round((spent / b.limit) * 100) : 0,
+      remaining: budget.limit - spent,
+      percent: budget.limit > 0 ? Math.round((spent / budget.limit) * 100) : 0,
     };
   });
 
@@ -51,15 +68,15 @@ exports.list = asyncHandler(async (req, res) => {
 });
 
 // POST /api/budgets  (create or upsert per user+category+month)
-exports.create = asyncHandler(async (req, res) => {
+export const create = asyncHandler(async (req, res) => {
   const { category: categoryId, month, limit } = req.body;
 
   const { category, error } = await resolveExpenseCategory(categoryId, req.user._id);
-  if (error) {
+  if (error || !category) {
     return res.status(400).json({
       success: false,
       message: 'Validation failed',
-      errors: [{ field: 'category', msg: error }],
+      errors: [{ field: 'category', msg: error ?? 'Category not found' }],
     });
   }
 
@@ -68,6 +85,9 @@ exports.create = asyncHandler(async (req, res) => {
     { $set: { limit } },
     { new: true, upsert: true, setDefaultsOnInsert: true, runValidators: true, context: 'query' }
   );
+  if (!budget) {
+    return res.status(500).json({ success: false, message: 'Could not save the budget' });
+  }
 
   res.status(201).json({
     success: true,
@@ -77,7 +97,7 @@ exports.create = asyncHandler(async (req, res) => {
 });
 
 // PUT /api/budgets/:id
-exports.update = asyncHandler(async (req, res) => {
+export const update = asyncHandler(async (req, res) => {
   const budget = await Budget.findOneAndUpdate(
     { _id: req.params.id, user: req.user._id },
     { $set: { limit: req.body.limit } },
@@ -92,7 +112,7 @@ exports.update = asyncHandler(async (req, res) => {
 });
 
 // DELETE /api/budgets/:id
-exports.remove = asyncHandler(async (req, res) => {
+export const remove = asyncHandler(async (req, res) => {
   const budget = await Budget.findOneAndDelete({ _id: req.params.id, user: req.user._id });
 
   if (!budget) {

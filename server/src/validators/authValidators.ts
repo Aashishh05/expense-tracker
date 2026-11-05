@@ -1,4 +1,4 @@
-const { body } = require('express-validator');
+import { body } from 'express-validator';
 
 const register = [
   body('name')
@@ -11,7 +11,7 @@ const register = [
     .withMessage('Enter a valid email address')
     .isLength({ max: 100 })
     .withMessage('Email must be at most 100 characters')
-    .customSanitizer((value) => String(value).toLowerCase()),
+    .customSanitizer((value: unknown) => String(value).toLowerCase()),
   body('password')
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters')
@@ -24,7 +24,7 @@ const login = [
     .trim()
     .isEmail()
     .withMessage('Enter a valid email address')
-    .customSanitizer((value) => String(value).toLowerCase()),
+    .customSanitizer((value: unknown) => String(value).toLowerCase()),
   body('password').notEmpty().withMessage('Password is required'),
 ];
 
@@ -39,7 +39,7 @@ const profile = [
     .trim()
     .isLength({ min: 3, max: 3 })
     .withMessage('Currency must be a 3-letter code')
-    .customSanitizer((value) => String(value).toUpperCase()),
+    .customSanitizer((value: unknown) => String(value).toUpperCase()),
 ];
 
 const password = [
@@ -51,4 +51,4 @@ const password = [
     .withMessage('New password must be at most 72 characters'),
 ];
 
-module.exports = { register, login, profile, password };
+export { register, login, profile, password };

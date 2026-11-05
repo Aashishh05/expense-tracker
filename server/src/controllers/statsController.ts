@@ -1,37 +1,55 @@
-const Transaction = require('../models/Transaction');
-const asyncHandler = require('../utils/asyncHandler');
-const {
-  MONTH_LABELS,
-  dateFilterFromRange,
-  monthRange,
-  currentMonthKey,
-  yearRange,
-} = require('../utils/dates');
+import Transaction from '../models/Transaction';
+import asyncHandler from '../utils/asyncHandler';
+import { MONTH_LABELS, dateFilterFromRange, monthRange, currentMonthKey, yearRange } from '../utils/dates';
+import type { Types } from 'mongoose';
+import type { CategoryType } from '../models/Category';
+
+interface SummaryRow {
+  _id: string;
+  total: number;
+  count: number;
+}
+
+interface CategoryStatRow {
+  _id: Types.ObjectId | null;
+  total: number;
+  count: number;
+  name: string;
+  color?: string | null;
+  icon?: string | null;
+}
+
+interface MonthlyRow {
+  _id: number;
+  income: number;
+  expense: number;
+}
 
 // GET /api/stats/summary?startDate=&endDate=
-exports.summary = asyncHandler(async (req, res) => {
+export const summary = asyncHandler(async (req, res) => {
   const dateFilter = dateFilterFromRange(req.query.startDate, req.query.endDate);
   const match = {
     user: req.user._id,
     ...(dateFilter && { date: dateFilter }),
   };
 
-  const rows = await Transaction.aggregate([
+  const rows = await Transaction.aggregate<SummaryRow>([
     { $match: match },
     { $group: { _id: '$type', total: { $sum: '$amount' }, count: { $sum: 1 } } },
   ]);
 
-  const summary = { income: 0, expense: 0, balance: 0, count: 0 };
+  const data = { income: 0, expense: 0, balance: 0, count: 0 };
   for (const row of rows) {
-    summary[row._id] = row.total;
-    summary.count += row.count;
+    if (row._id === 'income') data.income = row.total;
+    else if (row._id === 'expense') data.expense = row.total;
+    data.count += row.count;
   }
-  summary.balance = summary.income - summary.expense;
+  data.balance = data.income - data.expense;
 
   res.json({
     success: true,
     data: {
-      ...summary,
+      ...data,
       startDate: req.query.startDate || null,
       endDate: req.query.endDate || null,
     },
@@ -39,12 +57,12 @@ exports.summary = asyncHandler(async (req, res) => {
 });
 
 // GET /api/stats/by-category?type=expense&month=2026-11
-exports.byCategory = asyncHandler(async (req, res) => {
-  const type = req.query.type === 'income' ? 'income' : 'expense';
-  const month = req.query.month || currentMonthKey();
-  const range = monthRange(month);
+export const byCategory = asyncHandler(async (req, res) => {
+  const type: CategoryType = req.query.type === 'income' ? 'income' : 'expense';
+  const month = (req.query.month as string) || currentMonthKey();
+  const range = monthRange(month)!;
 
-  const data = await Transaction.aggregate([
+  const data = await Transaction.aggregate<CategoryStatRow>([
     {
       $match: {
         user: req.user._id,
@@ -79,12 +97,12 @@ exports.byCategory = asyncHandler(async (req, res) => {
 });
 
 // GET /api/stats/monthly?year=2026
-exports.monthly = asyncHandler(async (req, res) => {
+export const monthly = asyncHandler(async (req, res) => {
   const year = Number(req.query.year) || new Date().getUTCFullYear();
-  const range = yearRange(year);
+  const range = yearRange(year)!;
   const resolvedYear = yearRange(year) ? year : new Date().getUTCFullYear();
 
-  const rows = await Transaction.aggregate([
+  const rows = await Transaction.aggregate<MonthlyRow>([
     {
       $match: {
         user: req.user._id,
@@ -101,7 +119,7 @@ exports.monthly = asyncHandler(async (req, res) => {
     { $sort: { _id: 1 } },
   ]);
 
-  const byMonth = new Map(rows.map((r) => [r._id, r]));
+  const byMonth = new Map<number, MonthlyRow>(rows.map((r) => [r._id, r]));
   const months = MONTH_LABELS.map((label, i) => {
     const row = byMonth.get(i + 1);
     return {

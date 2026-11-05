@@ -1,5 +1,5 @@
-const { query } = require('express-validator');
-const { DAY_REGEX, MONTH_REGEX } = require('../utils/dates');
+import { query } from 'express-validator';
+import { DAY_REGEX, MONTH_REGEX } from '../utils/dates';
 
 const summary = [
   query('startDate')
@@ -28,4 +28,4 @@ const monthly = [
     .toInt(),
 ];
 
-module.exports = { summary, byCategory, monthly };
+export { summary, byCategory, monthly };

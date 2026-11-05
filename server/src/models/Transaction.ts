@@ -1,9 +1,25 @@
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
+import type { Document, Types } from 'mongoose';
+import type { CategoryType } from './Category';
 
-const transactionSchema = new mongoose.Schema(
+export interface ITransaction {
+  user: Types.ObjectId;
+  type: CategoryType;
+  amount: number;
+  category: Types.ObjectId;
+  date: Date;
+  note?: string;
+}
+
+export interface TransactionDocument extends Document<Types.ObjectId>, ITransaction {
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const transactionSchema = new Schema<TransactionDocument>(
   {
     user: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
       index: true,
@@ -22,7 +38,7 @@ const transactionSchema = new mongoose.Schema(
       min: [0.01, 'Amount must be positive'],
     },
     category: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'Category',
       required: [true, 'Category is required'],
     },
@@ -43,4 +59,6 @@ const transactionSchema = new mongoose.Schema(
 transactionSchema.index({ user: 1, date: -1 });
 transactionSchema.index({ user: 1, category: 1 });
 
-module.exports = mongoose.model('Transaction', transactionSchema);
+const Transaction = model<TransactionDocument>('Transaction', transactionSchema);
+
+export default Transaction;

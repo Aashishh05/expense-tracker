@@ -1,5 +1,5 @@
-const { body, param, query } = require('express-validator');
-const { MONTH_REGEX } = require('../utils/dates');
+import { body, param, query } from 'express-validator';
+import { MONTH_REGEX } from '../utils/dates';
 
 const create = [
   body('category').isMongoId().withMessage('Invalid category'),
@@ -29,4 +29,4 @@ const list = [
 
 const idParam = [param('id').isMongoId().withMessage('Invalid budget id')];
 
-module.exports = { create, update, list, idParam };
+export { create, update, list, idParam };

@@ -3,7 +3,7 @@
 A full-stack personal finance app — record income & expenses, organize by category, set monthly
 budgets, and see where your money goes through summaries and charts.
 
-**Stack:** MongoDB · Express · Node.js · React (TypeScript + Vite + Tailwind CSS 4 + Recharts)
+**Stack:** MongoDB · Express + TypeScript (Node.js) · React (TypeScript + Vite + Tailwind CSS 4 + Recharts)
 
 ## Features
 
@@ -21,55 +21,58 @@ budgets, and see where your money goes through summaries and charts.
 
 ## Project structure
 
-Backend code lives under `server/src/` (app + all folders), with `package.json` and `.env` at
-the `server/` root — a clean code/config split. This mirrors the folder structure in the design
-doc (§7), plus a few solid additions (marked `(+)`) such as `validators/`, `rateLimiter.js`,
-and client `types/`.
+Backend code lives under `server/src/` and is written in **TypeScript** (strict mode), matching
+the frontend — a fully consistent stack. `package.json` and `.env` stay at the `server/` root — a
+clean code/config split. This mirrors the folder structure in the design doc (§7), plus a few
+solid additions (marked `(+)`) such as `validators/`, `rateLimiter.js`, and client `types/`.
 
 ```
 expense-tracker/
 ├── README.md
 ├── .gitignore
-├── server/                              # Express REST API
+├── server/                              # Express REST API (TypeScript)
 │   ├── src/                             # (+) all backend code lives under src/
 │   │   ├── config/
-│   │   │   └── db.js                    # Mongoose connection
+│   │   │   └── db.ts                    # Mongoose connection
 │   │   ├── controllers/
-│   │   │   ├── authController.js        # register / login / me / profile / password
-│   │   │   ├── transactionController.js # CRUD + filters + pagination
-│   │   │   ├── categoryController.js    # defaults + custom CRUD (usage counts)
-│   │   │   ├── budgetController.js      # monthly upsert + spent aggregation
-│   │   │   └── statsController.js       # summary / by-category / monthly
+│   │   │   ├── authController.ts        # register / login / me / profile / password
+│   │   │   ├── transactionController.ts # CRUD + filters + pagination
+│   │   │   ├── categoryController.ts    # defaults + custom CRUD (usage counts)
+│   │   │   ├── budgetController.ts      # monthly upsert + spent aggregation
+│   │   │   └── statsController.ts       # summary / by-category / monthly
 │   │   ├── middleware/
-│   │   │   ├── authMiddleware.js        # JWT verify → req.user
-│   │   │   ├── errorMiddleware.js       # 404 + centralized error handler
-│   │   │   ├── validate.js              # express-validator result runner
-│   │   │   └── rateLimiter.js           # (+) global + auth limiters
+│   │   │   ├── authMiddleware.ts        # JWT verify → req.user
+│   │   │   ├── errorMiddleware.ts       # 404 + centralized error handler
+│   │   │   ├── validate.ts              # express-validator result runner
+│   │   │   └── rateLimiter.ts           # (+) global + auth limiters
 │   │   ├── models/
-│   │   │   ├── User.js                  # hashed password, toJSON strip
-│   │   │   ├── Category.js              # user: null = shared default
-│   │   │   ├── Transaction.js           # indexes {user+date}, {user+category}
-│   │   │   └── Budget.js                # unique (user, category, month)
+│   │   │   ├── User.ts                  # hashed password, toJSON strip, comparePassword
+│   │   │   ├── Category.ts              # user: null = shared default
+│   │   │   ├── Transaction.ts           # indexes {user+date}, {user+category}
+│   │   │   └── Budget.ts                # unique (user, category, month)
 │   │   ├── routes/
-│   │   │   ├── authRoutes.js
-│   │   │   ├── transactionRoutes.js
-│   │   │   ├── categoryRoutes.js
-│   │   │   ├── budgetRoutes.js
-│   │   │   └── statsRoutes.js
+│   │   │   ├── authRoutes.ts
+│   │   │   ├── transactionRoutes.ts
+│   │   │   ├── categoryRoutes.ts
+│   │   │   ├── budgetRoutes.ts
+│   │   │   └── statsRoutes.ts
 │   │   ├── validators/                  # (+) express-validator chains
-│   │   │   ├── authValidators.js
-│   │   │   ├── transactionValidators.js
-│   │   │   ├── categoryValidators.js
-│   │   │   ├── budgetValidators.js
-│   │   │   └── statsValidators.js
+│   │   │   ├── authValidators.ts
+│   │   │   ├── transactionValidators.ts
+│   │   │   ├── categoryValidators.ts
+│   │   │   ├── budgetValidators.ts
+│   │   │   └── statsValidators.ts
+│   │   ├── types/
+│   │   │   └── express.d.ts             # (+) typed req.user via declaration merging
 │   │   ├── utils/
-│   │   │   ├── generateToken.js
-│   │   │   ├── asyncHandler.js          # (+) async error forwarding
-│   │   │   ├── dates.js                 # (+) YYYY-MM-DD / month / year helpers
-│   │   │   └── defaultCategories.js     # (+) idempotent seed (runs on boot)
-│   │   ├── app.js                       # express wiring: helmet, cors, sanitize, routes
-│   │   └── server.js                    # entry: connectDB → seed → listen
-│   ├── package.json                     # scripts point at src/server.js
+│   │   │   ├── generateToken.ts
+│   │   │   ├── asyncHandler.ts          # (+) async error forwarding
+│   │   │   ├── dates.ts                 # (+) YYYY-MM-DD / month / year helpers
+│   │   │   └── defaultCategories.ts     # (+) idempotent seed (runs on boot)
+│   │   ├── app.ts                       # express wiring: helmet, cors, sanitize, routes
+│   │   └── server.ts                    # entry: connectDB → seed → listen
+│   ├── tsconfig.json                    # strict TS, CommonJS output → dist/
+│   ├── package.json                     # dev: tsx watch · build: tsc · start: node dist
 │   ├── .env.example
 │   └── .env                             # gitignored
 └── client/                              # React SPA (TypeScript)
@@ -144,7 +147,10 @@ cd server
 npm install
 # configure your environment (MongoDB URI + JWT secret)
 copy .env.example .env   # then edit .env
-npm run dev              # → http://localhost:5000
+npm run dev              # → http://localhost:5000 (tsx watch, hot reload)
+npm run typecheck        # strict TypeScript check
+npm run build            # compile to dist/
+npm start                # run the compiled build (node dist/server.js)
 ```
 
 `server/.env` needs:

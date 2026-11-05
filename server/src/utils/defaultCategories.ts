@@ -1,10 +1,19 @@
-const Category = require('../models/Category');
+import Category from '../models/Category';
+import type { AnyBulkWriteOperation } from 'mongoose';
+import type { CategoryDocument, CategoryType } from '../models/Category';
 
 /**
  * Shared default categories. Stored once with `user: null`
  * and available (read-only) to every user.
  */
-const DEFAULT_CATEGORIES = [
+export interface DefaultCategory {
+  name: string;
+  type: CategoryType;
+  icon: string;
+  color: string;
+}
+
+export const DEFAULT_CATEGORIES: DefaultCategory[] = [
   // Income
   { name: 'Salary', type: 'income', icon: '💼', color: '#0ea5e9' },
   { name: 'Freelance', type: 'income', icon: '💻', color: '#8b5cf6' },
@@ -24,15 +33,15 @@ const DEFAULT_CATEGORIES = [
 ];
 
 /** Idempotently upsert the default categories. */
-async function ensureDefaultCategories() {
-  const ops = DEFAULT_CATEGORIES.map(({ name, type, icon, color }) => ({
-    updateOne: {
-      filter: { user: null, name, type },
-      update: { $setOnInsert: { user: null, name, type, icon, color } },
-      upsert: true,
-    },
-  }));
+export async function ensureDefaultCategories(): Promise<void> {
+  const ops = DEFAULT_CATEGORIES.map<AnyBulkWriteOperation<CategoryDocument>>(
+    ({ name, type, icon, color }) => ({
+      updateOne: {
+        filter: { user: null, name, type },
+        update: { $setOnInsert: { user: null, name, type, icon, color } },
+        upsert: true,
+      },
+    })
+  );
   await Category.bulkWrite(ops, { ordered: true });
 }
-
-module.exports = { DEFAULT_CATEGORIES, ensureDefaultCategories };

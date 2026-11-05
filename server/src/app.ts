@@ -1,18 +1,18 @@
-const express = require('express');
-const helmet = require('helmet');
-const cors = require('cors');
-const morgan = require('morgan');
-const mongoSanitize = require('express-mongo-sanitize');
+import helmet from 'helmet';
+import cors from 'cors';
+import morgan from 'morgan';
+import mongoSanitize from 'express-mongo-sanitize';
+import express, { type Express } from 'express';
 
-const authRoutes = require('./routes/authRoutes');
-const transactionRoutes = require('./routes/transactionRoutes');
-const categoryRoutes = require('./routes/categoryRoutes');
-const budgetRoutes = require('./routes/budgetRoutes');
-const statsRoutes = require('./routes/statsRoutes');
-const { generalLimiter } = require('./middleware/rateLimiter');
-const { notFound, errorHandler } = require('./middleware/errorMiddleware');
+import authRoutes from './routes/authRoutes';
+import transactionRoutes from './routes/transactionRoutes';
+import categoryRoutes from './routes/categoryRoutes';
+import budgetRoutes from './routes/budgetRoutes';
+import statsRoutes from './routes/statsRoutes';
+import { generalLimiter } from './middleware/rateLimiter';
+import { notFound, errorHandler } from './middleware/errorMiddleware';
 
-const app = express();
+const app: Express = express();
 
 // Behind one proxy (Render, Railway, etc.) so rate limiting sees real IPs.
 app.set('trust proxy', 1);
@@ -39,7 +39,7 @@ if (process.env.NODE_ENV === 'production') {
 app.use('/api', generalLimiter);
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'API is healthy' });
 });
 
@@ -54,4 +54,4 @@ app.use('/api/stats', statsRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-module.exports = app;
+export default app;
