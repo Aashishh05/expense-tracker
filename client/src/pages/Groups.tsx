@@ -77,9 +77,6 @@ function GroupList() {
       <header className="mb-6 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-semibold tracking-tight md:text-2xl">Groups</h1>
-          <p className="mt-0.5 text-[13.5px] text-ink-2">
-            Bills, trips and rent shared with friends — balanced automatically
-          </p>
         </div>
         <Button onClick={() => setFormOpen(true)}>
           <PlusIcon className="h-4.5 w-4.5" />
@@ -262,7 +259,6 @@ function GroupDetail({ groupId }: { groupId: string }) {
             <h1 className="truncate text-[22px] font-semibold tracking-tight md:text-2xl">
               {group?.name ?? 'Group'}
             </h1>
-            <p className="mt-0.5 text-[13.5px] text-ink-2">Shared expenses, split equally</p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">

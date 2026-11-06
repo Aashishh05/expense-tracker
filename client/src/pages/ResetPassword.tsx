@@ -39,7 +39,6 @@ export default function ResetPassword() {
       <div className="w-full max-w-[400px] animate-fade-rise">
         <div className="mb-6 text-center">
           <h1 className="text-[22px] font-semibold tracking-tight">Set a new password</h1>
-          <p className="mt-1 text-[14px] text-ink-2">Choose a password of at least 6 characters.</p>
         </div>
 
         <div className="card p-6">

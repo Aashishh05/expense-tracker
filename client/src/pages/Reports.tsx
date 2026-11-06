@@ -66,7 +66,6 @@ export default function Reports() {
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3 md:items-center">
         <div>
           <h1 className="text-[22px] font-semibold tracking-tight md:text-2xl">Reports</h1>
-          <p className="mt-0.5 text-[13.5px] text-ink-2">Where your money went — month by month</p>
         </div>
       </header>
       <RateNote className="-mt-3.5 mb-5" />

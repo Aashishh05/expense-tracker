@@ -156,7 +156,6 @@ export default function Transactions() {
       <header className="mb-6 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-semibold tracking-tight md:text-2xl">Transactions</h1>
-          <p className="mt-0.5 text-[13.5px] text-ink-2">Every income and expense you've logged</p>
         </div>
         <div className="flex items-center gap-2">
           <Link

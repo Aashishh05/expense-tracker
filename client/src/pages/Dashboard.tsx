@@ -70,9 +70,6 @@ export default function Dashboard() {
       <header className="mb-6 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-semibold tracking-tight md:text-2xl">Dashboard</h1>
-          <p className="mt-0.5 text-[13.5px] text-ink-2">
-            {monthLabel(month)} · your money at a glance
-          </p>
         </div>
         <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
           <PlusIcon className="h-4.5 w-4.5" />

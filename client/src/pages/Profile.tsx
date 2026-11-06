@@ -55,7 +55,6 @@ export default function Profile() {
     <>
       <header className="mb-6">
         <h1 className="text-[22px] font-semibold tracking-tight md:text-2xl">Profile</h1>
-        <p className="mt-0.5 text-[13.5px] text-ink-2">Your account details and settings</p>
       </header>
 
       <div className="grid max-w-2xl grid-cols-1 gap-4 md:gap-5">

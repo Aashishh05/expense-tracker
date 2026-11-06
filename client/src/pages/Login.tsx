@@ -51,7 +51,6 @@ export default function Login() {
           </span>
           <div>
             <h1 className="text-[22px] font-semibold tracking-tight">Welcome back</h1>
-            <p className="mt-1 text-[14px] text-ink-2">Sign in to your Expense Tracker</p>
           </div>
         </div>
 

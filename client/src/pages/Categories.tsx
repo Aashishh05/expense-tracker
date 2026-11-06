@@ -49,9 +49,6 @@ export default function Categories() {
       <header className="mb-6 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-semibold tracking-tight md:text-2xl">Categories</h1>
-          <p className="mt-0.5 text-[13.5px] text-ink-2">
-            Organize your entries — defaults are shared, custom ones are yours to change
-          </p>
         </div>
         <Button
           onClick={() => {

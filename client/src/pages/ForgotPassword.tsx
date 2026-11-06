@@ -29,11 +29,6 @@ export default function ForgotPassword() {
       <div className="w-full max-w-[400px] animate-fade-rise">
         <div className="mb-6 text-center">
           <h1 className="text-[22px] font-semibold tracking-tight">Forgot password?</h1>
-          <p className="mt-1 text-[14px] text-ink-2">
-            {sent
-              ? 'Check your inbox for the reset link.'
-              : "We'll email you a link to set a new password."}
-          </p>
         </div>
 
         <div className="card p-6">

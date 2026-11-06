@@ -44,9 +44,6 @@ export default function Register() {
           </span>
           <div>
             <h1 className="text-[22px] font-semibold tracking-tight">Create your account</h1>
-            <p className="mt-1 text-[14px] text-ink-2">
-              Start tracking income and expenses in a minute
-            </p>
           </div>
         </div>
 
