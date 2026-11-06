@@ -1,7 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
-import { createTransaction, updateTransaction } from '@/api/transactions';
+import {
+  createTransaction,
+  updateTransaction,
+  uploadReceipt,
+  removeReceipt,
+} from '@/api/transactions';
 import type { TransactionInput } from '@/api/transactions';
 import type { Category, Transaction, TransactionType } from '@/types';
 import { Modal } from '@/components/ui/Modal';
@@ -16,6 +21,9 @@ interface TransactionFormProps {
   transaction: Transaction | null;
   categories: Category[];
   currency: string;
+  onViewReceipt?: (transaction: Transaction) => void;
+  /** When set, the form creates a shared expense locked to that group. */
+  group?: { _id: string; name: string } | null;
 }
 
 type FormValues = {
@@ -37,7 +45,8 @@ export function TransactionForm({
   onSaved,
   transaction,
   categories,
-  currency,
+  onViewReceipt,
+  group,
 }: TransactionFormProps) {
   const {
     register,
@@ -51,8 +60,14 @@ export function TransactionForm({
     defaultValues: { type: 'expense', amount: '', category: '', date: '', note: '' },
   });
 
+  // Receipts attach to the stored entry, so they're manageable only in edit mode.
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [receiptBusy, setReceiptBusy] = useState(false);
+  const [hasReceipt, setHasReceipt] = useState(false);
+
   useEffect(() => {
     if (!open) return;
+    setHasReceipt(Boolean(transaction?.receipt));
     reset(
       transaction
         ? {
@@ -85,6 +100,7 @@ export function TransactionForm({
       category: values.category,
       date: values.date,
       note: values.note.trim(),
+      ...(group && { group: group._id }),
     };
     try {
       if (transaction) {
@@ -106,6 +122,38 @@ export function TransactionForm({
     }
   });
 
+  async function onReceiptPicked(file: File) {
+    if (!transaction) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Receipt must be 5 MB or smaller');
+      return;
+    }
+    setReceiptBusy(true);
+    try {
+      await uploadReceipt(transaction._id, file);
+      setHasReceipt(true);
+      toast.success('Receipt attached');
+    } catch (err) {
+      toast.error(apiMessage(err, 'Could not upload the receipt'));
+    } finally {
+      setReceiptBusy(false);
+    }
+  }
+
+  async function onReceiptRemove() {
+    if (!transaction) return;
+    setReceiptBusy(true);
+    try {
+      await removeReceipt(transaction._id);
+      setHasReceipt(false);
+      toast.success('Receipt removed');
+    } catch (err) {
+      toast.error(apiMessage(err, 'Could not remove the receipt'));
+    } finally {
+      setReceiptBusy(false);
+    }
+  }
+
   return (
     <Modal
       open={open}
@@ -114,41 +162,48 @@ export function TransactionForm({
       subtitle={transaction ? undefined : 'Typed amounts are in NPR (base); everything converts to your display currency.'}
     >
       <form onSubmit={onSubmit} noValidate className="space-y-4">
-        {/* Type segmented control */}
+        {/* Type segmented control — locked to expense for shared group expenses */}
         <div>
           <span className="label">Type</span>
-          <div className="grid grid-cols-2 gap-1 rounded-xl bg-ink/[0.06] p-1">
-            {TYPE_CHOICES.map((choice) => (
-              <button
-                key={choice.value}
-                type="button"
-                aria-pressed={selectedType === choice.value}
-                onClick={() => {
-                  setValue('type', choice.value);
-                  setValue('category', '');
-                }}
-                className={cn(
-                  'h-9 rounded-[10px] text-[14px] font-medium transition-all duration-150 active:scale-[0.98]',
-                  selectedType === choice.value
-                    ? 'bg-surface text-ink shadow-card'
-                    : 'text-ink-2 hover:text-ink'
-                )}
-              >
-                <span
+          {group ? (
+            <p className="rounded-xl bg-ink/[0.05] px-3 py-2.5 text-[13.5px] text-ink-2">
+              Shared expense — split equally between all members of{' '}
+              <span className="font-medium text-ink">{group.name}</span>.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-1 rounded-xl bg-ink/[0.06] p-1">
+              {TYPE_CHOICES.map((choice) => (
+                <button
+                  key={choice.value}
+                  type="button"
+                  aria-pressed={selectedType === choice.value}
+                  onClick={() => {
+                    setValue('type', choice.value);
+                    setValue('category', '');
+                  }}
                   className={cn(
-                    'mr-1.5 inline-block h-2 w-2 rounded-full align-middle',
-                    choice.value === 'income' ? 'bg-income' : 'bg-expense'
+                    'h-9 rounded-[10px] text-[14px] font-medium transition-all duration-150 active:scale-[0.98]',
+                    selectedType === choice.value
+                      ? 'bg-surface text-ink shadow-card'
+                      : 'text-ink-2 hover:text-ink'
                   )}
-                />
-                {choice.label}
-              </button>
-            ))}
-          </div>
+                >
+                  <span
+                    className={cn(
+                      'mr-1.5 inline-block h-2 w-2 rounded-full align-middle',
+                      choice.value === 'income' ? 'bg-income' : 'bg-expense'
+                    )}
+                  />
+                  {choice.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input
-            label={`Amount${currency ? ` (${currency})` : ''}`}
+            label="Amount (base NPR)"
             type="number"
             inputMode="decimal"
             step="0.01"
@@ -195,6 +250,42 @@ export function TransactionForm({
             {...register('note')}
           />
           <p className="error-text">{errors.note?.message}</p>
+        </div>
+
+        {/* Receipt — attach/replace/remove while editing */}
+        <div>
+          <span className="label">Receipt</span>
+          {!transaction ? (
+            <p className="text-[12.5px] text-ink-3">Save the transaction first — receipts attach on edit.</p>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp,.pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = '';
+                  if (file) void onReceiptPicked(file);
+                }}
+              />
+              <Button variant="ghost" size="md" loading={receiptBusy} onClick={() => fileRef.current?.click()}>
+                {hasReceipt ? 'Replace receipt' : 'Attach receipt'}
+              </Button>
+              {hasReceipt && (
+                <Button variant="ghost" size="md" onClick={() => onViewReceipt?.(transaction)}>
+                  View
+                </Button>
+              )}
+              {hasReceipt && (
+                <Button variant="ghost" size="md" disabled={receiptBusy} onClick={() => void onReceiptRemove()}>
+                  Remove
+                </Button>
+              )}
+              <span className="text-[12.5px] text-ink-3">JPG · PNG · WebP · PDF · max 5 MB</span>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-2.5 pt-1">

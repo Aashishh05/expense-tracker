@@ -51,4 +51,25 @@ const password = [
     .withMessage('New password must be at most 72 characters'),
 ];
 
-export { register, login, profile, password };
+const forgotPassword = [
+  body('email')
+    .trim()
+    .isEmail()
+    .withMessage('Enter a valid email address')
+    .customSanitizer((value: unknown) => String(value).toLowerCase()),
+];
+
+const resetPassword = [
+  body('token')
+    .isHexadecimal()
+    .withMessage('Invalid reset token')
+    .isLength({ min: 64, max: 64 })
+    .withMessage('Invalid reset token'),
+  body('password')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters')
+    .isLength({ max: 72 })
+    .withMessage('Password must be at most 72 characters'),
+];
+
+export { register, login, profile, password, forgotPassword, resetPassword };

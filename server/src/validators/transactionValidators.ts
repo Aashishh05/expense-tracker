@@ -22,6 +22,10 @@ const create = [
     .trim()
     .isLength({ max: 200 })
     .withMessage('Note must be at most 200 characters'),
+  body('group')
+    .optional({ values: 'falsy' })
+    .isMongoId()
+    .withMessage('Invalid group'),
 ];
 
 const update = [
@@ -38,6 +42,10 @@ const update = [
     .trim()
     .isLength({ max: 200 })
     .withMessage('Note must be at most 200 characters'),
+  body('group')
+    .optional({ values: 'falsy' })
+    .isMongoId()
+    .withMessage('Invalid group'),
 ];
 
 const list = [

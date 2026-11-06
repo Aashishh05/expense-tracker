@@ -1,7 +1,8 @@
 # 💰 Expense Tracker (MERN)
 
 A full-stack personal finance app — record income & expenses, organize by category, set monthly
-budgets, and see where your money goes through summaries and charts.
+budgets, split shared costs with friends, and see where your money goes through summaries and
+charts. Installable as a PWA.
 
 **Stack:** MongoDB · Express + TypeScript (Node.js) · React (TypeScript + Vite + Tailwind CSS 4 + Recharts)
 
@@ -23,6 +24,14 @@ budgets, and see where your money goes through summaries and charts.
   even when the app is closed (a boot + 10-minute sweep materializes due occurrences with catch-up)
 - **Multi-currency** — display every amount in any of the 26 supported currencies, converted at
   render time from the NPR base using a clearly-dated static rate snapshot
+- **Password reset** — "Forgot password?" flow; 15-minute, single-use, SHA-256-hashed reset
+  tokens (the reply never reveals whether an email is registered)
+- **Receipt uploads** — attach a photo/PDF (JPG · PNG · WebP · PDF, ≤ 5 MB) to any transaction and
+  view it in-app; group members can open the receipts of shared expenses too
+- **Shared group expenses** — groups of up to 12 members log shared expenses that are split
+  equally; live per-member balances and a "who pays whom" settle-up plan
+- **PWA** — installable app: service worker + web manifest, offline-ready app shell; API responses
+  are deliberately never cached
 - **Security** — bcrypt hashing, input validation, rate limiting, helmet, CORS, mongo-sanitize
 - Apple-style light & dark UI: system fonts, translucent nav, subtle motion, reduced-motion
   support, responsive from mobile (bottom tab bar) to desktop (sidebar)
@@ -43,29 +52,33 @@ expense-tracker/
 │   │   ├── config/
 │   │   │   └── db.ts                    # Mongoose connection
 │   │   ├── controllers/
-│   │   │   ├── authController.ts        # register / login / me / profile / password
-│   │   │   ├── transactionController.ts # CRUD + filters + pagination
+│   │   │   ├── authController.ts        # register / login / me / profile / password / reset flows
+│   │   │   ├── transactionController.ts # CRUD + filters + pagination + receipt upload/download
 │   │   │   ├── categoryController.ts    # defaults + custom CRUD (usage counts)
 │   │   │   ├── budgetController.ts      # monthly upsert + spent aggregation
 │   │   │   ├── recurringController.ts   # recurring rules: CRUD + due materialization
+│   │   │   ├── groupController.ts       # (+) groups: CRUD + members + stats + shared feed
 │   │   │   └── statsController.ts       # summary / by-category / monthly
 │   │   ├── middleware/
 │   │   │   ├── authMiddleware.ts        # JWT verify → req.user
 │   │   │   ├── errorMiddleware.ts       # 404 + centralized error handler
 │   │   │   ├── validate.ts              # express-validator result runner
-│   │   │   └── rateLimiter.ts           # (+) global + auth limiters
+│   │   │   ├── rateLimiter.ts           # (+) global + auth limiters
+│   │   │   └── receiptUpload.ts         # (+) multer disk storage (5 MB · jpg/png/webp/pdf)
 │   │   ├── models/
-│   │   │   ├── User.ts                  # hashed password, toJSON strip, comparePassword
+│   │   │   ├── User.ts                  # hashed password, toJSON strip (reset fields hidden)
 │   │   │   ├── Category.ts              # user: null = shared default
-│   │   │   ├── Transaction.ts           # + dedupe index (user+recurring+date)
+│   │   │   ├── Transaction.ts           # + receipt/group fields · unique partial dedupe index
 │   │   │   ├── Budget.ts                # unique (user, category, month)
-│   │   │   └── Recurring.ts             # daily/weekly/monthly templates
+│   │   │   ├── Recurring.ts             # daily/weekly/monthly templates
+│   │   │   └── Group.ts                 # (+) permanent members (1-12), owner role
 │   │   ├── routes/
 │   │   │   ├── authRoutes.ts
 │   │   │   ├── transactionRoutes.ts
 │   │   │   ├── categoryRoutes.ts
 │   │   │   ├── budgetRoutes.ts
 │   │   │   ├── recurringRoutes.ts
+│   │   │   ├── groupRoutes.ts
 │   │   │   └── statsRoutes.ts
 │   │   ├── validators/                  # (+) express-validator chains
 │   │   │   ├── authValidators.ts
@@ -73,6 +86,7 @@ expense-tracker/
 │   │   │   ├── categoryValidators.ts
 │   │   │   ├── budgetValidators.ts
 │   │   │   ├── recurringValidators.ts
+│   │   │   ├── groupValidators.ts
 │   │   │   └── statsValidators.ts
 │   │   ├── types/
 │   │   │   └── express.d.ts             # (+) typed req.user via declaration merging
@@ -81,6 +95,9 @@ expense-tracker/
 │   │   │   ├── asyncHandler.ts          # (+) async error forwarding
 │   │   │   ├── dates.ts                 # (+) YYYY-MM-DD / month / year helpers
 │   │   │   ├── recurrence.ts            # (+) occurrence math + due sweep
+│   │   │   ├── groups.ts                # (+) member resolution + greedy settle-up plan
+│   │   │   ├── receipts.ts              # (+) uploads dir + safe unlink helpers
+│   │   │   ├── mailer.ts                # (+) dev mail stub (console + .mail-outbox.txt)
 │   │   │   └── defaultCategories.ts     # (+) idempotent seed (runs on boot)
 │   │   ├── app.ts                       # express wiring: helmet, cors, sanitize, routes
 │   │   └── server.ts                    # entry: connectDB → seed → recurring sweep → listen
@@ -89,11 +106,13 @@ expense-tracker/
 │   ├── .env.example
 │   └── .env                             # gitignored
 └── client/                              # React SPA (TypeScript)
-    ├── index.html
-    ├── vite.config.ts                   # react + tailwindcss plugins, @ alias
+    ├── index.html                       # PWA meta: manifest link, apple-touch-icon
+    ├── vite.config.ts                   # react + tailwindcss plugins, @ alias, PWA plugin (manifest + SW)
     ├── tsconfig.json
     ├── package.json
     ├── .env                             # VITE_API_URL (gitignored)
+    ├── public/
+    │   └── icons/                       # PWA app icons (192 / 512 / maskable-512)
     └── src/
         ├── main.tsx                     # root render + <Toaster>
         ├── App.tsx                      # all routes
@@ -106,7 +125,8 @@ expense-tracker/
         │   ├── categories.ts
         │   ├── stats.ts
         │   ├── budgets.ts
-        │   └── recurring.ts             # (+) recurring rules API
+        │   ├── recurring.ts             # (+) recurring rules API
+        │   └── groups.ts                # (+) groups API (+ receipt helpers in transactions.ts)
         ├── components/
         │   ├── icons.tsx                # (+) single 1.7px-stroke SVG icon set
         │   ├── layout/
@@ -124,9 +144,10 @@ expense-tracker/
         │   │   ├── ExpensePieChart.tsx  # donut by category
         │   │   └── MonthlyBarChart.tsx  # income vs. expense per month
         │   ├── transactions/
-        │       ├── TransactionForm.tsx  # create/edit modal form
+        │       ├── TransactionForm.tsx  # create/edit modal form (+ receipt attach/remove/view)
         │       ├── FilterBar.tsx        # search + filters + clear
-        │       └── TransactionList.tsx  # table (desktop) / cards (mobile)
+        │       ├── ReceiptViewer.tsx    # (+) in-app receipt preview (blob object URL)
+        │       └── TransactionList.tsx  # table (desktop) / cards (mobile) + receipt badges
         │   └── recurring/
         │       └── RecurringForm.tsx    # (+) rule create/edit modal
         ├── context/
@@ -138,11 +159,14 @@ expense-tracker/
         ├── pages/
         │   ├── Login.tsx
         │   ├── Register.tsx
+        │   ├── ForgotPassword.tsx       # (+) request a reset link
+        │   ├── ResetPassword.tsx        # (+) set a new password (token via query param)
         │   ├── Dashboard.tsx
         │   ├── Transactions.tsx
         │   ├── Categories.tsx
         │   ├── Budgets.tsx
         │   ├── Recurring.tsx
+        │   ├── Groups.tsx               # (+) group list + group detail / balances / settle-up
         │   ├── Reports.tsx
         │   ├── Profile.tsx
         │   └── NotFound.tsx
@@ -200,11 +224,12 @@ npm run dev              # → http://localhost:5173
 
 | Area         | Endpoints                                                          |
 | ------------ | ------------------------------------------------------------------ |
-| Auth         | `POST /auth/register` · `POST /auth/login` · `GET /auth/me` · `PUT /auth/profile` · `PUT /auth/password` |
-| Transactions | `GET/POST /transactions` · `GET/PUT/DELETE /transactions/:id` · `GET /transactions/export` (CSV) |
+| Auth         | `POST /auth/register` · `POST /auth/login` · `GET /auth/me` · `PUT /auth/profile` · `PUT /auth/password` · `POST /auth/forgot-password` · `POST /auth/reset-password` |
+| Transactions | `GET/POST /transactions` · `GET/PUT/DELETE /transactions/:id` · `GET /transactions/export` (CSV) · `GET/POST/DELETE /transactions/:id/receipt` |
 | Categories   | `GET/POST /categories` · `PUT/DELETE /categories/:id`              |
 | Budgets      | `GET/POST /budgets` · `PUT/DELETE /budgets/:id`                    |
 | Recurring    | `GET/POST /recurring` · `PUT/DELETE /recurring/:id`                |
+| Groups       | `GET/POST /groups` · `GET/PUT/DELETE /groups/:id` · `GET /groups/:id/stats` · `GET /groups/:id/transactions` · `POST /groups/:id/members` |
 | Stats        | `GET /stats/summary` · `GET /stats/by-category` · `GET /stats/monthly` |
 
 All list endpoints support query params (`type`, `category`, `startDate`, `endDate`, `search`,
@@ -226,10 +251,25 @@ Response envelope: `{ "success": true, "data": …, "pagination": … }` — err
 - Recurring rules are materialized by a boot-time + 10-minute sweep (`utils/recurrence.ts`).
   Missed occurrences are backfilled on their own dates; a monthly rule on the 31st clamps to
   shorter months (Feb 28/29). Deleting a rule keeps already-created transactions.
+- Password-reset links are delivered by the dev mail stub (`utils/mailer.ts`): printed to the
+  server console **and** appended to `server/.mail-outbox.txt` (gitignored). Swap that one
+  function for nodemailer / a provider SDK to send real emails — no caller needs to change.
+- Receipts are stored in `server/uploads/` (gitignored) under random filenames and served only
+  through the authenticated API — visible to the author, or any member of the group the expense
+  belongs to. Removing a receipt or deleting the transaction unlinks the file.
+- Group members are permanent by design (that keeps the equal-split math honest); deleting a
+  group keeps its transactions as personal expenses of whoever logged them. Group entries are
+  expense-only and always split equally across the current members.
+- The recurring dedupe index is a unique **partial** index on (user, rule, date) — manual entries
+  never hit it, so two personal transactions on the same date are fine. (A plain unique-sparse
+  compound index would have wrongly blocked them.)
+- PWA: run `npm run build && npm run preview` (or deploy) to test install/offline — the dev server
+  intentionally ships no service worker.
 
 ## Roadmap (Phase 2 ideas)
 
-Receipt uploads · email/password reset · shared/group expenses · PWA.
+Deployment walkthrough (Docker + a hosted MongoDB cluster) · real SMTP/email provider plug-in
+for the reset mail · budget/recurring notifications.
 
 ---
 

@@ -19,3 +19,7 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# Receipt uploads (runtime data)
+server/uploads/
+server/.mail-outbox.txt

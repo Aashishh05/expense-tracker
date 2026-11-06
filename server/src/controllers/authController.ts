@@ -1,6 +1,15 @@
+import crypto from 'crypto';
 import User from '../models/User';
 import generateToken from '../utils/generateToken';
 import asyncHandler from '../utils/asyncHandler';
+import { sendMail } from '../utils/mailer';
+
+const RESET_TOKEN_TTL_MS = 15 * 60 * 1000; // 15 minutes
+
+/** The client never stores the raw token — only its hash lands in the DB. */
+function hashToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
 
 // POST /api/auth/register
 export const register = asyncHandler(async (req, res) => {
@@ -80,4 +89,56 @@ export const changePassword = asyncHandler(async (req, res) => {
   await user.save(); // pre-save hook hashes it
 
   res.json({ success: true, message: 'Password changed' });
+});
+
+// POST /api/auth/forgot-password
+// Always answers the same message — never reveals whether an email exists.
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body as { email: string };
+  const generic = { success: true, message: 'If that email is registered, a reset link has been sent.' };
+
+  const user = await User.findOne({ email }).select('+password');
+  if (!user) return res.json(generic);
+
+  const token = crypto.randomBytes(32).toString('hex');
+  user.resetPasswordToken = hashToken(token);
+  user.resetPasswordExpires = new Date(Date.now() + RESET_TOKEN_TTL_MS);
+  await user.save();
+
+  const clientUrl = (process.env.CLIENT_URL ?? 'http://localhost:5173').replace(/\/$/, '');
+  await sendMail({
+    to: user.email,
+    subject: 'Reset your Expense Tracker password',
+    text:
+      `Hi ${user.name},\n\n` +
+      `Use the link below to choose a new password (valid for 15 minutes):\n` +
+      `${clientUrl}/reset-password?token=${token}\n\n` +
+      `If you didn't request this, you can safely ignore this email.`,
+  });
+
+  return res.json(generic);
+});
+
+// POST /api/auth/reset-password  { token, password }
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { token, password } = req.body as { token: string; password: string };
+
+  const user = await User.findOne({
+    resetPasswordToken: hashToken(token),
+    resetPasswordExpires: { $gt: new Date() },
+  }).select('+password');
+
+  if (!user) {
+    return res.status(400).json({
+      success: false,
+      message: 'This reset link is invalid or has expired — please request a new one.',
+    });
+  }
+
+  user.password = password;
+  user.resetPasswordToken = null;
+  user.resetPasswordExpires = null;
+  await user.save();
+
+  res.json({ success: true, message: 'Password updated — you can now log in with your new password.' });
 });

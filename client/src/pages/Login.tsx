@@ -100,6 +100,12 @@ export default function Login() {
               {errors.password && <p className="error-text">{errors.password.message}</p>}
             </div>
 
+            <div className="flex justify-end">
+              <Link to="/forgot-password" className="text-[13px] font-medium text-accent hover:underline">
+                Forgot password?
+              </Link>
+            </div>
+
             <Button type="submit" size="lg" loading={isSubmitting} className="w-full">
               Sign in
             </Button>

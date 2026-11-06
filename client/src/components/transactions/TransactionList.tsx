@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { Transaction } from '@/types';
 import { formatDate, formatCurrency, softColor } from '@/utils/format';
-import { PencilIcon, TrashIcon, ReceiptIcon, RepeatIcon } from '@/components/icons';
+import { PencilIcon, TrashIcon, ReceiptIcon, RepeatIcon, PaperclipIcon } from '@/components/icons';
 import { IconButton } from '@/components/ui/Button';
 
 interface TransactionListProps {
@@ -9,6 +9,10 @@ interface TransactionListProps {
   currency: string;
   onEdit: (transaction: Transaction) => void;
   onDelete: (transaction: Transaction) => void;
+  /** Opens the receipt viewer; the paperclip only shows when it's provided. */
+  onViewReceipt?: (transaction: Transaction) => void;
+  /** Adds the author name to each row (shared group feeds are read-only). */
+  showPayer?: boolean;
   showActions?: boolean;
 }
 
@@ -40,7 +44,27 @@ function categoryMeta(transaction: Transaction) {
   };
 }
 
-export function TransactionList({ data, currency, onEdit, onDelete, showActions = true }: TransactionListProps) {
+export function TransactionList({
+  data,
+  currency,
+  onEdit,
+  onDelete,
+  onViewReceipt,
+  showPayer = false,
+  showActions = true,
+}: TransactionListProps) {
+  const rowHasActions = (transaction: Transaction) =>
+    Boolean(showActions) || (Boolean(transaction.receipt) && Boolean(onViewReceipt));
+  const headerHasActions =
+    Boolean(showActions) || data.some((t) => Boolean(t.receipt) && Boolean(onViewReceipt));
+
+  const payerOf = (transaction: Transaction): string | null => {
+    if (!showPayer) return null;
+    return typeof transaction.user === 'object' && transaction.user !== null
+      ? transaction.user.name
+      : null;
+  };
+
   return (
     <>
       {/* Mobile cards */}
@@ -58,7 +82,7 @@ export function TransactionList({ data, currency, onEdit, onDelete, showActions 
                   )}
                 </p>
                 <p className="truncate text-[12.5px] text-ink-2">
-                  {note || formatDate(transaction.date)}
+                  {[payerOf(transaction), note || formatDate(transaction.date)].filter(Boolean).join(' · ')}
                 </p>
               </div>
               <div className="text-right">
@@ -72,14 +96,23 @@ export function TransactionList({ data, currency, onEdit, onDelete, showActions 
                 </p>
                 <p className="text-[11.5px] text-ink-3">{formatDate(transaction.date)}</p>
               </div>
-              {showActions && (
+              {rowHasActions(transaction) && (
                 <div className="ml-1 flex flex-col gap-0.5">
-                  <IconButton label="Edit" tone="accent" onClick={() => onEdit(transaction)}>
-                    <PencilIcon className="h-4 w-4" />
-                  </IconButton>
-                  <IconButton label="Delete" tone="danger" onClick={() => onDelete(transaction)}>
-                    <TrashIcon className="h-4 w-4" />
-                  </IconButton>
+                  {transaction.receipt && onViewReceipt && (
+                    <IconButton label="View receipt" onClick={() => onViewReceipt(transaction)}>
+                      <PaperclipIcon className="h-4 w-4" />
+                    </IconButton>
+                  )}
+                  {showActions && (
+                    <>
+                      <IconButton label="Edit" tone="accent" onClick={() => onEdit(transaction)}>
+                        <PencilIcon className="h-4 w-4" />
+                      </IconButton>
+                      <IconButton label="Delete" tone="danger" onClick={() => onDelete(transaction)}>
+                        <TrashIcon className="h-4 w-4" />
+                      </IconButton>
+                    </>
+                  )}
                 </div>
               )}
             </li>
@@ -94,7 +127,7 @@ export function TransactionList({ data, currency, onEdit, onDelete, showActions 
             <th className="px-4 py-2.5 font-medium">Category</th>
             <th className="px-4 py-2.5 font-medium">Date</th>
             <th className="px-4 py-2.5 text-right font-medium">Amount</th>
-            {showActions && <th className="w-24 px-4 py-2.5 font-medium" aria-label="Actions" />}
+            {headerHasActions && <th className="w-24 px-4 py-2.5 font-medium" aria-label="Actions" />}
           </tr>
         </thead>
         <tbody>
@@ -112,7 +145,10 @@ export function TransactionList({ data, currency, onEdit, onDelete, showActions 
                           <RepeatIcon aria-label="Recurring" className="ml-1 inline h-3.5 w-3.5 shrink-0 align-[-2px] text-ink-3" />
                         )}
                       </p>
-                      {note && <p className="truncate text-[12.5px] text-ink-2">{note}</p>}
+                      {note && <p className="truncate text-[12.5px] text-ink-2">{[payerOf(transaction), note].filter(Boolean).join(' · ')}</p>}
+                      {!note && payerOf(transaction) && (
+                        <p className="truncate text-[12.5px] text-ink-2">{payerOf(transaction)}</p>
+                      )}
                     </div>
                   </div>
                 </td>
@@ -129,15 +165,24 @@ export function TransactionList({ data, currency, onEdit, onDelete, showActions 
                     {formatCurrency(transaction.amount, currency)}
                   </span>
                 </td>
-                {showActions && (
+                {rowHasActions(transaction) && (
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-0.5">
-                      <IconButton label="Edit" tone="accent" onClick={() => onEdit(transaction)}>
-                        <PencilIcon className="h-4 w-4" />
-                      </IconButton>
-                      <IconButton label="Delete" tone="danger" onClick={() => onDelete(transaction)}>
-                        <TrashIcon className="h-4 w-4" />
-                      </IconButton>
+                      {transaction.receipt && onViewReceipt && (
+                        <IconButton label="View receipt" onClick={() => onViewReceipt(transaction)}>
+                          <PaperclipIcon className="h-4 w-4" />
+                        </IconButton>
+                      )}
+                      {showActions && (
+                        <>
+                          <IconButton label="Edit" tone="accent" onClick={() => onEdit(transaction)}>
+                            <PencilIcon className="h-4 w-4" />
+                          </IconButton>
+                          <IconButton label="Delete" tone="danger" onClick={() => onDelete(transaction)}>
+                            <TrashIcon className="h-4 w-4" />
+                          </IconButton>
+                        </>
+                      )}
                     </div>
                   </td>
                 )}
@@ -161,6 +206,9 @@ export function RecentRow({ transaction, currency }: { transaction: Transaction;
           {note || name}
           {transaction.recurring && (
             <RepeatIcon aria-label="Recurring" className="ml-1 inline h-3.5 w-3.5 shrink-0 align-[-2px] text-ink-3" />
+          )}
+          {transaction.receipt && (
+            <PaperclipIcon aria-label="Receipt" className="ml-1 inline h-3.5 w-3.5 shrink-0 align-[-2px] text-ink-3" />
           )}
         </p>
         <p className="text-[12.5px] text-ink-2">

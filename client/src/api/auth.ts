@@ -54,6 +54,16 @@ export async function changePassword(input: { currentPassword: string; newPasswo
   await client.put('/auth/password', input);
 }
 
+export async function forgotPasswordApi(email: string): Promise<{ message?: string }> {
+  const { data } = await client.post('/auth/forgot-password', { email });
+  return data;
+}
+
+export async function resetPasswordApi(token: string, newPassword: string): Promise<{ message?: string }> {
+  const { data } = await client.post('/auth/reset-password', { token, password: newPassword });
+  return data;
+}
+
 /** Storage-only logout — the context clears its state separately. */
 export function clearAuthStorage() {
   localStorage.removeItem(TOKEN_KEY);

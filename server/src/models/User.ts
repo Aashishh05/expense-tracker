@@ -9,6 +9,9 @@ export interface IUser {
   email: string;
   password: string;
   currency: string;
+  /** SHA-256 hash of the pending password-reset token (null when none). */
+  resetPasswordToken?: string | null;
+  resetPasswordExpires?: Date | null;
 }
 
 /** Instance methods declared on the schema. */
@@ -52,6 +55,14 @@ const userSchema = new Schema<UserDocument, Model<UserDocument>, UserInstanceMet
       minlength: 3,
       maxlength: 3,
     },
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
@@ -74,6 +85,8 @@ userSchema.methods.comparePassword = function (this: UserDocument, candidate: st
 (userSchema.methods as Record<string, unknown>).toJSON = function (this: UserDocument) {
   const obj = this.toObject();
   delete obj.password;
+  delete obj.resetPasswordToken;
+  delete obj.resetPasswordExpires;
   delete obj.__v;
   return obj;
 };

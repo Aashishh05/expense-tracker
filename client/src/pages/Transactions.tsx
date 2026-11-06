@@ -13,8 +13,9 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { TransactionForm } from '@/components/transactions/TransactionForm';
 import { FilterBar, type TxnFilterState } from '@/components/transactions/FilterBar';
 import { TransactionList } from '@/components/transactions/TransactionList';
+import { ReceiptViewer } from '@/components/transactions/ReceiptViewer';
 import { Skeleton } from '@/components/ui/Loader';
-import { PlusIcon, ReceiptIcon, DownloadIcon, RepeatIcon } from '@/components/icons';
+import { PlusIcon, ReceiptIcon, DownloadIcon, RepeatIcon, UsersIcon } from '@/components/icons';
 import { apiMessage, cn } from '@/utils/format';
 import { RateNote } from '@/components/ui/RateNote';
 import { Link, useLocation } from 'react-router-dom';
@@ -58,6 +59,7 @@ export default function Transactions() {
   const [exporting, setExporting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
   const [deletePending, setDeletePending] = useState(false);
+  const [viewingReceipt, setViewingReceipt] = useState<Transaction | null>(null);
 
   const request = useMemo(
     () => ({
@@ -159,10 +161,17 @@ export default function Transactions() {
         <div className="flex items-center gap-2">
           <Link
             to="/recurring"
-            className="pressable inline-flex h-10 items-center gap-2 rounded-xl px-3.5 text-[13.5px] font-medium text-ink-2 transition-colors hover:bg-ink/[0.05] hover:text-ink md:hidden"
+            aria-label="Recurring page"
+            className="pressable grid h-10 w-10 place-items-center rounded-xl text-ink-2 transition-colors hover:bg-ink/[0.05] hover:text-ink md:hidden"
           >
             <RepeatIcon className="h-4.5 w-4.5" />
-            Recurring
+          </Link>
+          <Link
+            to="/groups"
+            aria-label="Groups page"
+            className="pressable grid h-10 w-10 place-items-center rounded-xl text-ink-2 transition-colors hover:bg-ink/[0.05] hover:text-ink md:hidden"
+          >
+            <UsersIcon className="h-4.5 w-4.5" />
           </Link>
           <Button variant="ghost" onClick={handleExport} loading={exporting}>
             <DownloadIcon className="h-4.5 w-4.5" />
@@ -219,6 +228,7 @@ export default function Transactions() {
               currency={user?.currency ?? 'NPR'}
               onEdit={openEdit}
               onDelete={(transaction) => setDeleteTarget(transaction)}
+              onViewReceipt={setViewingReceipt}
             />
           </div>
         )}
@@ -235,7 +245,10 @@ export default function Transactions() {
         transaction={editing}
         categories={categories}
         currency={user?.currency ?? 'NPR'}
+        onViewReceipt={setViewingReceipt}
       />
+
+      <ReceiptViewer transaction={viewingReceipt} onClose={() => setViewingReceipt(null)} />
 
       <ConfirmDialog
         open={deleteTarget !== null}

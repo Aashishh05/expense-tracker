@@ -1,7 +1,10 @@
+import fs from 'fs';
 import Transaction from '../models/Transaction';
 import Category, { type CategoryDocument } from '../models/Category';
 import asyncHandler from '../utils/asyncHandler';
 import { dateFilterFromRange } from '../utils/dates';
+import { deleteReceiptFile, receiptPath } from '../utils/receipts';
+import { resolveMemberGroup } from '../utils/groups';
 import type { Request } from 'express';
 import type { FilterQuery, Types } from 'mongoose';
 import type { ITransaction } from '../models/Transaction';
@@ -120,7 +123,14 @@ export const exportCsv = asyncHandler(async (req, res) => {
 
 // POST /api/transactions
 export const create = asyncHandler(async (req, res) => {
-  const { type, amount, category, date, note } = req.body;
+  const { type, amount, category, date, note, group } = req.body as {
+    type: CategoryType;
+    amount: number;
+    category: string;
+    date?: Date;
+    note?: string;
+    group?: string;
+  };
 
   const categoryDoc = await resolveCategory(category, req.user._id);
   if (!categoryDoc) {
@@ -131,6 +141,28 @@ export const create = asyncHandler(async (req, res) => {
     });
   }
 
+  // Shared group expense: the caller must be a member and entries are
+  // always expenses (income never needs splitting).
+  let groupRef: Types.ObjectId | undefined;
+  if (group) {
+    const groupDoc = await resolveMemberGroup(group, req.user._id);
+    if (!groupDoc) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: [{ field: 'group', msg: 'Group not found — are you a member?' }],
+      });
+    }
+    if (type !== 'expense') {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: [{ field: 'group', msg: 'Group transactions are expenses only' }],
+      });
+    }
+    groupRef = groupDoc._id;
+  }
+
   const transaction = await Transaction.create({
     user: req.user._id,
     type,
@@ -138,6 +170,7 @@ export const create = asyncHandler(async (req, res) => {
     category,
     ...(date !== undefined && { date }),
     ...(note !== undefined && { note }),
+    ...(groupRef !== undefined && { group: groupRef }),
   });
 
   await transaction.populate('category', CATEGORY_FIELDS);
@@ -161,7 +194,14 @@ export const getOne = asyncHandler(async (req, res) => {
 
 // PUT /api/transactions/:id
 export const update = asyncHandler(async (req, res) => {
-  const { type, amount, category, date, note } = req.body;
+  const { type, amount, category, date, note, group } = req.body as {
+    type?: CategoryType;
+    amount?: number;
+    category?: string;
+    date?: Date;
+    note?: string;
+    group?: string;
+  };
 
   const transaction = await Transaction.findOne({ _id: req.params.id, user: req.user._id });
   if (!transaction) {
@@ -177,13 +217,34 @@ export const update = asyncHandler(async (req, res) => {
         errors: [{ field: 'category', msg: 'Category not found' }],
       });
     }
-    transaction.category = category;
+    transaction.category = category as unknown as Types.ObjectId;
   }
 
   if (type !== undefined) transaction.type = type;
   if (amount !== undefined) transaction.amount = amount;
   if (date !== undefined) transaction.date = date;
   if (note !== undefined) transaction.note = note;
+
+  if (group !== undefined) {
+    const groupDoc = await resolveMemberGroup(group, req.user._id);
+    if (!groupDoc) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: [{ field: 'group', msg: 'Group not found — are you a member?' }],
+      });
+    }
+    transaction.group = groupDoc._id;
+  }
+
+  // A shared entry can only ever be an expense.
+  if (transaction.group && transaction.type !== 'expense') {
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      errors: [{ field: 'group', msg: 'Group transactions are expenses only' }],
+    });
+  }
 
   await transaction.save(); // full schema validation on update
   await transaction.populate('category', CATEGORY_FIELDS);
@@ -202,9 +263,74 @@ export const remove = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Transaction not found' });
   }
 
+  // Clean up any uploaded receipt from disk.
+  deleteReceiptFile(transaction.receipt);
+
   res.json({
     success: true,
     message: 'Transaction deleted',
     data: { _id: transaction._id },
   });
+});
+
+// POST /api/transactions/:id/receipt (multipart field: receipt)
+export const uploadReceipt = asyncHandler(async (req, res) => {
+  const transaction = await Transaction.findOne({ _id: req.params.id, user: req.user._id });
+  if (!transaction) {
+    return res.status(404).json({ success: false, message: 'Transaction not found' });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No receipt file was received' });
+  }
+
+  // Replacing an existing receipt removes its file first.
+  deleteReceiptFile(transaction.receipt);
+  transaction.receipt = req.file.filename;
+  await transaction.save();
+
+  res.json({ success: true, message: 'Receipt uploaded', data: { receipt: true } });
+});
+
+// GET /api/transactions/:id/receipt — streams the file to the author, or to
+// any member of the group the shared expense belongs to.
+export const downloadReceipt = asyncHandler(async (req, res) => {
+  const transaction = await Transaction.findOne({ _id: req.params.id }).select('receipt user group');
+  if (!transaction?.receipt) {
+    return res.status(404).json({ success: false, message: 'No receipt attached to this transaction' });
+  }
+
+  const isAuthor = String(transaction.user) === String(req.user._id);
+  let authorized = isAuthor;
+  if (!authorized && transaction.group) {
+    authorized = (await resolveMemberGroup(String(transaction.group), req.user._id)) !== null;
+  }
+  if (!authorized) {
+    return res.status(403).json({ success: false, message: 'You do not have access to this receipt' });
+  }
+
+  const filePath = receiptPath(transaction.receipt);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ success: false, message: 'Receipt file is missing on the server' });
+  }
+
+  res.sendFile(filePath);
+});
+
+// DELETE /api/transactions/:id/receipt
+export const removeReceipt = asyncHandler(async (req, res) => {
+  const transaction = await Transaction.findOne({ _id: req.params.id, user: req.user._id });
+  if (!transaction) {
+    return res.status(404).json({ success: false, message: 'Transaction not found' });
+  }
+
+  if (!transaction.receipt) {
+    return res.status(400).json({ success: false, message: 'No receipt attached to this transaction' });
+  }
+
+  deleteReceiptFile(transaction.receipt);
+  transaction.receipt = undefined;
+  await transaction.save();
+
+  res.json({ success: true, message: 'Receipt removed', data: { receipt: false } });
 });

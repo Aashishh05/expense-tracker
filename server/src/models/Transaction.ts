@@ -11,6 +11,10 @@ export interface ITransaction {
   note?: string;
   /** Set when this entry was auto-created by a recurring rule. */
   recurring?: Types.ObjectId;
+  /** Receipt image stored in server/uploads (filename only). */
+  receipt?: string;
+  /** Set when this is a shared group expense (one row per logged entry). */
+  group?: Types.ObjectId;
 }
 
 export interface TransactionDocument extends Document<Types.ObjectId>, ITransaction {
@@ -59,15 +63,33 @@ const transactionSchema = new Schema<TransactionDocument>(
       ref: 'Recurring',
       default: undefined,
     },
+    receipt: {
+      type: String,
+      maxlength: [120, 'Receipt name is too long'],
+    },
+    group: {
+      type: Schema.Types.ObjectId,
+      ref: 'Group',
+      default: undefined,
+    },
   },
   { timestamps: true }
 );
 
 transactionSchema.index({ user: 1, date: -1 });
 transactionSchema.index({ user: 1, category: 1 });
+transactionSchema.index({ group: 1, date: -1 });
 // Stops a repeated materialization from inserting the same automatic
-// entry twice; sparse so hand-made transactions (no field) are ignored.
-transactionSchema.index({ user: 1, recurring: 1, date: 1 }, { unique: true, sparse: true });
+// entry twice. A unique PARTIAL index (recurring is an ObjectId) — a
+// compound sparse index would still index hand-made rows (they carry
+// user+date) as recurring=null, wrongly blocking two same-day entries.
+transactionSchema.index(
+  { user: 1, recurring: 1, date: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { recurring: { $type: 'objectId' } },
+  }
+);
 
 const Transaction = model<TransactionDocument>('Transaction', transactionSchema);
 

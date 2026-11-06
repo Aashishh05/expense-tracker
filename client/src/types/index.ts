@@ -28,6 +28,44 @@ export interface Transaction {
   note?: string;
   /** Present when this entry was auto-created by a recurring rule. */
   recurring?: string;
+  /** Set when a receipt image/pdf is attached (filename lives server-side). */
+  receipt?: string;
+  /** Set when this is a shared group expense. */
+  group?: string;
+  /** Author of the entry — populated on group feeds. */
+  user?: { _id: string; name: string; email?: string };
+}
+
+export type GroupRole = 'owner' | 'member';
+
+export interface GroupMemberUser {
+  _id: string;
+  name: string;
+  email: string;
+}
+
+export interface Group {
+  _id: string;
+  name: string;
+  owner: string;
+  members: Array<{ user: GroupMemberUser; role: GroupRole; joinedAt: string }>;
+  createdAt: string;
+}
+
+export interface GroupStatsMember {
+  user: GroupMemberUser;
+  role: GroupRole;
+  count: number;
+  paid: number;
+  share: number;
+  net: number;
+}
+
+export interface GroupStats {
+  total: number;
+  count: number;
+  members: GroupStatsMember[];
+  settle: Array<{ from: GroupMemberUser; to: GroupMemberUser; amount: number }>;
 }
 
 export type RecurringFrequency = 'daily' | 'weekly' | 'monthly';

@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
+import { MulterError } from 'multer';
 
 /** Handles unmatched routes. */
 const notFound: RequestHandler = (req, res) => {
@@ -30,6 +31,12 @@ const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
       statusCode = 409;
       message = 'Duplicate value';
     }
+  }
+
+  // Multer upload rejections (oversize/parsing) are client errors.
+  if (err instanceof MulterError) {
+    statusCode = 400;
+    message = err.code === 'LIMIT_FILE_SIZE' ? 'Receipt must be 5 MB or smaller' : 'Receipt upload failed';
   }
 
   // Mongoose schema validation

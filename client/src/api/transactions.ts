@@ -18,6 +18,7 @@ export type TransactionInput = {
   category: string;
   date: string;
   note: string;
+  group?: string;
 };
 
 function clean(filters: TransactionFilters): Record<string, unknown> {
@@ -60,4 +61,22 @@ export async function exportTransactionsCsv(filters: TransactionFilters): Promis
     responseType: 'blob',
   });
   return response.data as Blob;
+}
+
+export async function uploadReceipt(id: string, file: File): Promise<{ message?: string }> {
+  const form = new FormData();
+  form.append('receipt', file);
+  const { data } = await client.post(`/transactions/${id}/receipt`, form);
+  return data;
+}
+
+export async function removeReceipt(id: string): Promise<{ message?: string }> {
+  const { data } = await client.delete(`/transactions/${id}/receipt`);
+  return data;
+}
+
+/** Streams the receipt through the authenticated API for in-app viewing. */
+export async function receiptPreviewUrl(id: string): Promise<{ blob: Blob; type: string }> {
+  const response = await client.get(`/transactions/${id}/receipt`, { responseType: 'blob' });
+  return { blob: response.data as Blob, type: String(response.headers['content-type'] ?? '') };
 }
