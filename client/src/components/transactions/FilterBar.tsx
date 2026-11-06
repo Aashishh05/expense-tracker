@@ -92,10 +92,7 @@ export function FilterBar({ filters, onChange, onClear, categories, error }: Fil
       </div>
 
       {activeCount > 0 && (
-        <div className="flex items-center justify-between">
-          <p className="text-[12.5px] text-ink-2">
-            <span className="nums">{activeCount}</span> filter{activeCount === 1 ? '' : 's'} applied
-          </p>
+        <div className="flex justify-end">
           <button
             type="button"
             onClick={onClear}

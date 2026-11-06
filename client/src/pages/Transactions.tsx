@@ -15,10 +15,10 @@ import { FilterBar, type TxnFilterState } from '@/components/transactions/Filter
 import { TransactionList } from '@/components/transactions/TransactionList';
 import { ReceiptViewer } from '@/components/transactions/ReceiptViewer';
 import { Skeleton } from '@/components/ui/Loader';
-import { Plus as PlusIcon, Receipt as ReceiptIcon, Download as DownloadIcon, Repeat as RepeatIcon, Users as UsersIcon } from 'lucide-react';
+import { Plus as PlusIcon, Receipt as ReceiptIcon, Download as DownloadIcon } from 'lucide-react';
 import { apiMessage, cn } from '@/utils/format';
 import { RateNote } from '@/components/ui/RateNote';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 const PAGE_LIMIT = 10;
 
@@ -117,17 +117,65 @@ export default function Transactions() {
         search: filters.search || undefined,
         sort: '-date',
       });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `transactions-${new Date().toISOString().slice(0, 10)}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-      toast.success('CSV exported');
+      // Parse CSV text from blob and convert to simple printable HTML/PDF document
+      const text = await blob.text();
+      const lines = text.split('\n').filter(Boolean);
+      const headers = lines[0]?.split(',').map((h) => h.replace(/"/g, '')) ?? [];
+      const rows = lines.slice(1).map((line) => line.split(',').map((cell) => cell.replace(/"/g, '')));
+
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Transactions Report</title>
+              <style>
+                body { font-family: system-ui, sans-serif; padding: 20px; color: #111; }
+                h1 { margin-bottom: 5px; font-size: 20px; }
+                p { color: #666; font-size: 13px; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; font-size: 13px; }
+                th { background-color: #f5ebd0; font-weight: 600; }
+                tr:nth-child(even) { background-color: #fcfbfa; }
+              </style>
+            </head>
+            <body>
+              <h1>Transactions Report</h1>
+              <p>Generated on ${new Date().toLocaleDateString()}</p>
+              <table>
+                <thead>
+                  <tr>
+                    <th>SN</th>
+                    ${headers.map((h) => `<th>${h}</th>`).join('')}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rows
+                    .map(
+                      (row, index) => `
+                    <tr>
+                      <td>${index + 1}</td>
+                      ${row.map((cell) => `<td>${cell}</td>`).join('')}
+                    </tr>
+                  `
+                    )
+                    .join('')}
+                </tbody>
+              </table>
+              <script>
+                window.onload = () => {
+                  window.print();
+                };
+              </script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
+      toast.success('PDF export dialog opened');
     } catch (err) {
-      toast.error(apiMessage(err, 'Could not export the CSV'));
+      toast.error(apiMessage(err, 'Could not export the PDF'));
     } finally {
       setExporting(false);
     }
@@ -158,24 +206,10 @@ export default function Transactions() {
           <h1 className="text-[22px] font-semibold tracking-tight md:text-2xl">Transactions</h1>
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            to="/recurring"
-            aria-label="Recurring page"
-            className="pressable grid h-10 w-10 place-items-center rounded-xl text-ink-2 transition-colors hover:bg-ink/[0.05] hover:text-ink md:hidden"
-          >
-            <RepeatIcon className="h-4.5 w-4.5" />
-          </Link>
-          <Link
-            to="/groups"
-            aria-label="Groups page"
-            className="pressable grid h-10 w-10 place-items-center rounded-xl text-ink-2 transition-colors hover:bg-ink/[0.05] hover:text-ink md:hidden"
-          >
-            <UsersIcon className="h-4.5 w-4.5" />
-          </Link>
           <Button variant="ghost" onClick={handleExport} loading={exporting}>
             <DownloadIcon className="h-4.5 w-4.5" />
-            <span className="hidden sm:inline">Export CSV</span>
-            <span className="sm:hidden">CSV</span>
+            <span className="hidden sm:inline">Export PDF</span>
+            <span className="sm:hidden">PDF</span>
           </Button>
           <Button
             onClick={() => {

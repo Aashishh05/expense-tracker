@@ -119,6 +119,7 @@ export function TransactionList({
       <table className="hidden w-full text-left md:table">
         <thead>
           <tr className="border-b border-line text-[12.5px] font-medium text-ink-2">
+            <th className="w-16 px-4 py-2.5 font-medium">SN</th>
             <th className="px-4 py-2.5 font-medium">Category</th>
             <th className="px-4 py-2.5 font-medium">Date</th>
             <th className="px-4 py-2.5 text-right font-medium">Amount</th>
@@ -126,10 +127,11 @@ export function TransactionList({
           </tr>
         </thead>
         <tbody>
-          {data.map((transaction) => {
+          {data.map((transaction, index) => {
             const { name, note } = categoryMeta(transaction);
             return (
               <tr key={transaction._id} className="border-b border-line/70 transition-colors last:border-0 hover:bg-ink/[0.02]">
+                <td className="px-4 py-3 text-[13.5px] text-ink-2">{index + 1}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <CategoryChip transaction={transaction} />
