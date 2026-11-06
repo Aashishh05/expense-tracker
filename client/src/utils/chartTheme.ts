@@ -20,10 +20,10 @@ export function useChartTooltip(): CSSProperties {
   const cssVar = useChartVar();
   return {
     borderRadius: 12,
-    border: `1px solid ${cssVar('--line', '#e8e8ed')}`,
+    border: `1px solid ${cssVar('--line', '#e8dcbc')}`,
     boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-    background: cssVar('--surface', '#ffffff'),
-    color: cssVar('--ink', '#1d1d1f'),
+    background: cssVar('--surface', '#fffcf4'),
+    color: cssVar('--ink', '#2a1417'),
     fontSize: 13,
     padding: '8px 12px',
   };

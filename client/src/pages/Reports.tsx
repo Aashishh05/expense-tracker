@@ -115,7 +115,7 @@ export default function Reports() {
             <ul className="space-y-3 self-center">
               {byCategory.map((category, index) => {
                 const share = totalExpense > 0 ? Math.round((category.total / totalExpense) * 100) : 0;
-                const color = category.color || '#64748b';
+                const color = category.color || '#8a776d';
                 return (
                   <li key={category._id}>
                     <div className="mb-1 flex items-center justify-between gap-3 text-[13.5px]">
@@ -136,7 +136,7 @@ export default function Reports() {
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-ink/[0.05]">
                       <div
                         className="h-full rounded-full"
-                        style={{ width: `${share}%`, backgroundColor: color || ['#0071e3', '#f59e0b', '#8b5cf6'][index % 3] }}
+                        style={{ width: `${share}%`, backgroundColor: color || ['#7f011f', '#b98a2e', '#8b5cf6'][index % 3] }}
                       />
                     </div>
                   </li>

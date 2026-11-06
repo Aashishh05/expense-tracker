@@ -33,7 +33,7 @@ export function ExpensePieChart({ data, currency }: ExpensePieChartProps) {
     color: d.color || CHART_COLORS[i % CHART_COLORS.length],
   }));
 
-  const legendColor = cssVar('--ink-2', '#6e6e73');
+  const legendColor = cssVar('--ink-2', '#6d5c57');
 
   return (
     <div className="h-[280px] w-full">

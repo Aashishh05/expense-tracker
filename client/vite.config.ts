@@ -17,8 +17,8 @@ export default defineConfig({
         description:
           'Track income and expenses, set monthly budgets, automate recurring entries and split shared spending.',
         lang: 'en',
-        theme_color: '#0071e3',
-        background_color: '#f5f5f7',
+        theme_color: '#7f011f',
+        background_color: '#f5ebd0',
         display: 'standalone',
         start_url: '/',
         icons: [

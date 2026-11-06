@@ -2,7 +2,7 @@ import type { TransactionType } from '@/types';
 
 /** Fallback chart palette for categories without a color. */
 export const CHART_COLORS = [
-  '#0071e3',
+  '#7f011f',
   '#f59e0b',
   '#8b5cf6',
   '#14b8a6',
@@ -14,7 +14,7 @@ export const CHART_COLORS = [
 
 /** Palette offered when creating a custom category. */
 export const SWATCH_COLORS = [
-  '#0071e3',
+  '#7f011f',
   '#f59e0b',
   '#ec4899',
   '#22c55e',

@@ -23,7 +23,7 @@ function apply(theme: Theme): void {
   document.documentElement.classList.toggle('dark', theme === 'dark');
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', theme === 'dark' ? '#000000' : '#f5f5f7');
+    ?.setAttribute('content', theme === 'dark' ? '#150d0e' : '#f5ebd0');
 }
 
 export function setTheme(theme: Theme): void {

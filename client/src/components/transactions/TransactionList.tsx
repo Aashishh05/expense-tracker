@@ -21,7 +21,7 @@ function CategoryChip({ transaction }: { transaction: Transaction }) {
     typeof transaction.category === 'object' && transaction.category !== null
       ? transaction.category
       : null;
-  const color = category?.color || '#64748b';
+  const color = category?.color || '#8a776d';
   return (
     <span
       className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[17px]"
@@ -241,7 +241,7 @@ export function EmptyTransactions({ href, ctaLabel }: { href: string; ctaLabel: 
           </p>
           <Link
             to={href}
-            className="mt-2 rounded-xl bg-accent px-4 py-2 text-[14px] font-medium text-white transition-colors hover:bg-[#0077ed] active:scale-95"
+            className="mt-2 rounded-xl bg-accent px-4 py-2 text-[14px] font-medium text-white transition-colors hover:bg-[#940125] active:scale-95"
           >
             {ctaLabel}
           </Link>

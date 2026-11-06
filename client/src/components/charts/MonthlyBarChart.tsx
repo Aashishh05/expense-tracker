@@ -22,7 +22,7 @@ export function MonthlyBarChart({ data, currency }: MonthlyBarChartProps) {
   const cssVar = useChartVar();
   const tooltipStyle = useChartTooltip();
 
-  const tickFill = cssVar('--ink-2', '#6e6e73');
+  const tickFill = cssVar('--ink-2', '#6d5c57');
 
   return (
     <div className="h-[280px] w-full">
@@ -32,7 +32,7 @@ export function MonthlyBarChart({ data, currency }: MonthlyBarChartProps) {
           <XAxis
             dataKey="label"
             tick={{ fontSize: 11, fill: tickFill }}
-            axisLine={{ stroke: cssVar('--line', '#e8e8ed') }}
+            axisLine={{ stroke: cssVar('--line', '#e8dcbc') }}
             tickLine={false}
             interval={0}
           />
@@ -57,14 +57,14 @@ export function MonthlyBarChart({ data, currency }: MonthlyBarChartProps) {
           <Bar
             dataKey="income"
             name="Income"
-            fill={cssVar('--income', '#16a34a')}
+            fill={cssVar('--income', '#15803d')}
             radius={[5, 5, 0, 0]}
             maxBarSize={22}
           />
           <Bar
             dataKey="expense"
             name="Expense"
-            fill={cssVar('--expense', '#ef4444')}
+            fill={cssVar('--expense', '#a3123c')}
             radius={[5, 5, 0, 0]}
             maxBarSize={22}
           />

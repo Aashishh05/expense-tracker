@@ -33,8 +33,9 @@ charts. Installable as a PWA.
 - **PWA** — installable app: service worker + web manifest, offline-ready app shell; API responses
   are deliberately never cached
 - **Security** — bcrypt hashing, input validation, rate limiting, helmet, CORS, mongo-sanitize
-- Apple-style light & dark UI: system fonts, translucent nav, subtle motion, reduced-motion
-  support, responsive from mobile (bottom tab bar) to desktop (sidebar)
+- Apple-style light & dark UI in a wine red & light sand palette (accent `#7f011f`, canvas
+  `#f5ebd0`): system fonts, translucent nav, subtle motion, reduced-motion support, responsive
+  from mobile (bottom tab bar) to desktop (sidebar)
 
 ## Project structure
 

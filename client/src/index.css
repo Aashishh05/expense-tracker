@@ -18,7 +18,7 @@
   --color-ink-2: var(--ink-2);
   --color-ink-3: var(--ink-3);
 
-  /* Interaction accent (Apple blue) */
+  /* Interaction accent (wine red) */
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
 
@@ -73,51 +73,51 @@
   :root {
     color-scheme: light;
 
-    --bg: #f5f5f7;
-    --surface: #ffffff;
-    --line: #e8e8ed;
-    --ink: #1d1d1f;
-    --ink-2: #6e6e73;
-    --ink-3: #aeaeb2;
+    --bg: #f5ebd0;
+    --surface: #fffcf4;
+    --line: #e8dcbc;
+    --ink: #2a1417;
+    --ink-2: #6d5c57;
+    --ink-3: #a1908a;
 
-    --accent: #0071e3;
-    --accent-soft: #eaf2fd;
+    --accent: #7f011f;
+    --accent-soft: #f4e0e2;
 
     --income: #15803d;
     --income-soft: #e7f5ee;
-    --expense: #dc2626;
-    --expense-soft: #fdeceb;
+    --expense: #a3123c;
+    --expense-soft: #f7e3e8;
     --warn: #b45309;
     --warn-soft: #fdf1de;
 
     /* Greys that need a different alpha per theme (charts, hairlines) */
     --chart-grid: rgba(0, 0, 0, 0.055);
-    --chart-axis: #e8e8ed;
+    --chart-axis: #e8dcbc;
     --chart-cursor: rgba(0, 0, 0, 0.035);
   }
 
   .dark {
     color-scheme: dark;
 
-    --bg: #000000;
-    --surface: #1c1c1e;
-    --line: #2c2c2e;
-    --ink: #f5f5f7;
-    --ink-2: #98989f;
-    --ink-3: #6e6e73;
+    --bg: #150d0e;
+    --surface: #251619;
+    --line: #3b2428;
+    --ink: #f5ebd0;
+    --ink-2: #cbb6a4;
+    --ink-3: #8c7468;
 
-    --accent: #0a84ff;
-    --accent-soft: rgba(10, 132, 255, 0.14);
+    --accent: #cd4b68;
+    --accent-soft: rgba(205, 75, 104, 0.14);
 
     --income: #32d74b;
     --income-soft: rgba(50, 215, 75, 0.14);
-    --expense: #ff453a;
-    --expense-soft: rgba(255, 69, 58, 0.14);
+    --expense: #f25871;
+    --expense-soft: rgba(242, 88, 113, 0.15);
     --warn: #ff9f0a;
     --warn-soft: rgba(255, 159, 10, 0.14);
 
     --chart-grid: rgba(255, 255, 255, 0.09);
-    --chart-axis: #38383a;
+    --chart-axis: #3b2428;
     --chart-cursor: rgba(255, 255, 255, 0.06);
   }
 
@@ -143,7 +143,7 @@
   }
 
   ::selection {
-    background: rgba(0, 113, 227, 0.16);
+    background: color-mix(in srgb, var(--color-accent) 20%, transparent);
   }
 
   :focus-visible {

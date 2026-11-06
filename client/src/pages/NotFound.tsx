@@ -12,7 +12,7 @@ export default function NotFound() {
         </p>
         <Link
           to="/"
-          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-[14px] font-medium text-white transition-colors hover:bg-[#0077ed] active:scale-95"
+          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-[14px] font-medium text-white transition-colors hover:bg-[#940125] active:scale-95"
         >
           Back to dashboard
           <ArrowRightIcon className="h-4 w-4" />
