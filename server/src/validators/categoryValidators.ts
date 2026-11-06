@@ -10,7 +10,7 @@ const create = [
   body('type')
     .isIn(['income', 'expense'])
     .withMessage('Type must be income or expense'),
-  body('icon').optional({ values: 'falsy' }).trim().isLength({ max: 10 }).withMessage('Icon is too long'),
+  body('icon').optional({ values: 'falsy' }).trim().isLength({ max: 24 }).withMessage('Icon is too long'),
   body('color')
     .optional({ values: 'falsy' })
     .trim()
@@ -27,7 +27,7 @@ const update = [
     .isLength({ min: 1, max: 30 })
     .withMessage('Category name must be 1-30 characters'),
   body('type').not().exists().withMessage('Category type cannot be changed'),
-  body('icon').optional({ values: 'falsy' }).trim().isLength({ max: 10 }).withMessage('Icon is too long'),
+  body('icon').optional({ values: 'falsy' }).trim().isLength({ max: 24 }).withMessage('Icon is too long'),
   body('color')
     .optional({ values: 'falsy' })
     .trim()

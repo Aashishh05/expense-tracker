@@ -1,7 +1,7 @@
 import type { Pagination as PaginationData } from '@/types';
 import { cn } from '@/utils/format';
 import { IconButton } from './Button';
-import { ChevronLeftIcon, ChevronRightIcon } from '@/components/icons';
+import { ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon } from 'lucide-react';
 
 interface PaginationProps {
   pagination: PaginationData;

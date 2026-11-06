@@ -4,14 +4,15 @@ A full-stack personal finance app — record income & expenses, organize by cate
 budgets, split shared costs with friends, and see where your money goes through summaries and
 charts. Installable as a PWA.
 
-**Stack:** MongoDB · Express + TypeScript (Node.js) · React (TypeScript + Vite + Tailwind CSS 4 + Recharts)
+**Stack:** MongoDB · Express + TypeScript (Node.js) · React (TypeScript + Vite + Tailwind CSS 4 + Recharts + lucide-react)
 
 ## Features
 
 - **Auth** — register / login / logout, JWT (`Authorization: Bearer`), persistent session
 - **Transactions** — full CRUD, filter by type / category / date range, search by note,
   sort, pagination
-- **Categories** — shared defaults (auto-seeded) + custom categories with icon & color
+- **Categories** — shared defaults (auto-seeded) + custom categories with a minimal lucide icon
+  (34-option picker) & color
 - **Dashboard** — income / expense / balance summary cards, recent list, pie & bar charts
 - **Budgets** — monthly per-category limits with progress bars and over-budget warnings
 - **Reports** — expense breakdown per month, income vs. expense trend per year
@@ -99,7 +100,7 @@ expense-tracker/
 │   │   │   ├── groups.ts                # (+) member resolution + greedy settle-up plan
 │   │   │   ├── receipts.ts              # (+) uploads dir + safe unlink helpers
 │   │   │   ├── mailer.ts                # (+) dev mail stub (console + .mail-outbox.txt)
-│   │   │   └── defaultCategories.ts     # (+) idempotent seed (runs on boot)
+│   │   │   └── defaultCategories.ts     # (+) idempotent seed (runs on boot; also refreshes defaults' icon/color)
 │   │   ├── app.ts                       # express wiring: helmet, cors, sanitize, routes
 │   │   └── server.ts                    # entry: connectDB → seed → recurring sweep → listen
 │   ├── tsconfig.json                    # strict TS, CommonJS output → dist/
@@ -129,7 +130,8 @@ expense-tracker/
         │   ├── recurring.ts             # (+) recurring rules API
         │   └── groups.ts                # (+) groups API (+ receipt helpers in transactions.ts)
         ├── components/
-        │   ├── icons.tsx                # (+) single 1.7px-stroke SVG icon set
+        │   ├── categories/
+        │   │   └── categoryIcons.tsx    # (+) curated lucide set + CategoryIconChip / picker options
         │   ├── layout/
         │   │   └── AppLayout.tsx        # sidebar + top bar + bottom tab bar
         │   ├── ui/
@@ -240,6 +242,10 @@ Response envelope: `{ "success": true, "data": …, "pagination": … }` — err
 `{ "success": false, "message": …, "errors": [{ field, msg }] }`.
 
 ## Notes
+
+- Category icons are stored as kebab-case lucide names (`utensils`, `briefcase`), not emoji —
+  rendering is centralized in `components/categories/categoryIcons.tsx`, whose chip falls back to
+  a Tag glyph when unset and still renders plain emoji for categories created before the switch.
 
 - Transaction dates are stored at UTC midnight and displayed in UTC — a date is a date, not a
   timestamp, so grouping never shifts.

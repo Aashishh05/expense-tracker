@@ -26,7 +26,7 @@ import { Skeleton } from '@/components/ui/Loader';
 import { TransactionForm } from '@/components/transactions/TransactionForm';
 import { TransactionList } from '@/components/transactions/TransactionList';
 import { ReceiptViewer } from '@/components/transactions/ReceiptViewer';
-import { PlusIcon, UsersIcon, ChevronLeftIcon, PencilIcon, TrashIcon } from '@/components/icons';
+import { Plus as PlusIcon, Users as UsersIcon, ChevronLeft as ChevronLeftIcon, Pencil as PencilIcon, Trash2 as TrashIcon } from 'lucide-react';
 import { apiMessage, cn, formatCurrency, formatDate } from '@/utils/format';
 
 const PAGE_LIMIT = 20;

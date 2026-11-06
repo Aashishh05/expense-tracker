@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
-import { WalletIcon } from '@/components/icons';
+import { Wallet as WalletIcon } from 'lucide-react';
 import { apiFieldErrors, apiMessage } from '@/utils/format';
 
 type RegisterValues = { name: string; email: string; password: string; confirm: string };

@@ -8,7 +8,8 @@ import { ExpensePieChart } from '@/components/charts/ExpensePieChart';
 import { MonthlyBarChart } from '@/components/charts/MonthlyBarChart';
 import { IconButton } from '@/components/ui/Button';
 import { RateNote } from '@/components/ui/RateNote';
-import { ChevronLeftIcon, ChevronRightIcon } from '@/components/icons';
+import { ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon } from 'lucide-react';
+import { CategoryIconChip } from '@/components/categories/categoryIcons';
 import {
   apiMessage,
   formatCurrency,
@@ -18,7 +19,6 @@ import {
   monthLabel,
   shiftMonth,
   cn,
-  softColor,
 } from '@/utils/format';
 
 export default function Reports() {
@@ -120,13 +120,7 @@ export default function Reports() {
                   <li key={category._id}>
                     <div className="mb-1 flex items-center justify-between gap-3 text-[13.5px]">
                       <span className="flex min-w-0 items-center gap-2">
-                        <span
-                          className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[13px]"
-                          style={{ backgroundColor: softColor(color) }}
-                          aria-hidden="true"
-                        >
-                          {category.icon || '🧾'}
-                        </span>
+                        <CategoryIconChip size="sm" icon={category.icon} color={color} />
                         <span className="truncate font-medium text-ink">{category.name}</span>
                       </span>
                       <span className="nums shrink-0 text-ink-2">

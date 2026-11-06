@@ -1,6 +1,6 @@
 import type { Category, TransactionType } from '@/types';
 import { Select } from '@/components/ui/Input';
-import { XIcon, SearchIcon } from '@/components/icons';
+import { X as XIcon, Search as SearchIcon } from 'lucide-react';
 import { cn } from '@/utils/format';
 
 export interface TxnFilterState {

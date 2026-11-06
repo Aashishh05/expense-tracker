@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
-import { WalletIcon, EyeIcon, EyeOffIcon } from '@/components/icons';
+import { Wallet as WalletIcon, Eye as EyeIcon, EyeOff as EyeOffIcon } from 'lucide-react';
 import { apiFieldErrors, apiMessage } from '@/utils/format';
 
 type LoginValues = { email: string; password: string };

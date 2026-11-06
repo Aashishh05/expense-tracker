@@ -14,7 +14,7 @@ import { TransactionForm } from '@/components/transactions/TransactionForm';
 import { RecentRow } from '@/components/transactions/TransactionList';
 import { ExpensePieChart } from '@/components/charts/ExpensePieChart';
 import { MonthlyBarChart } from '@/components/charts/MonthlyBarChart';
-import { ArrowRightIcon, PlusIcon, TrendUpIcon, TrendDownIcon, ScaleIcon, ChartIcon } from '@/components/icons';
+import { ArrowRight as ArrowRightIcon, Plus as PlusIcon, TrendingUp as TrendUpIcon, TrendingDown as TrendDownIcon, Scale as ScaleIcon, ChartColumn as ChartIcon } from 'lucide-react';
 import { apiMessage, formatCurrency, currentMonthKey, monthEndDay, currentYear, monthLabel } from '@/utils/format';
 import { RateNote } from '@/components/ui/RateNote';
 

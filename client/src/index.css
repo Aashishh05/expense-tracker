@@ -161,6 +161,11 @@
   input[type='month']::-webkit-datetime-edit {
     color: var(--color-ink);
   }
+
+  /* lucide icons: keep the thin 1.7px stroke the custom set used (lucide defaults to 2px) */
+  svg.lucide {
+    stroke-width: 1.7px;
+  }
 }
 
 @layer components {

@@ -11,8 +11,9 @@ import { Input, Select } from '@/components/ui/Input';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/Loader';
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, TargetIcon, PencilIcon, TrashIcon } from '@/components/icons';
-import { apiMessage, cn, formatCurrency, currentMonthKey, monthLabel, shiftMonth, softColor } from '@/utils/format';
+import { ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon, Plus as PlusIcon, Target as TargetIcon, Pencil as PencilIcon, Trash2 as TrashIcon, TriangleAlert } from 'lucide-react';
+import { CategoryIconChip } from '@/components/categories/categoryIcons';
+import { apiMessage, cn, formatCurrency, currentMonthKey, monthLabel, shiftMonth } from '@/utils/format';
 import { RateNote } from '@/components/ui/RateNote';
 
 export default function Budgets() {
@@ -149,8 +150,11 @@ export default function Budgets() {
           </ul>
 
           {totals.over > 0 && (
-            <p className="mt-4 rounded-xl bg-expense-soft px-4 py-3 text-[13.5px] text-expense">
-              ⚠ {totals.over} {totals.over === 1 ? 'budget is' : 'budgets are'} over the limit this month.
+            <p className="mt-4 flex items-center gap-2 rounded-xl bg-expense-soft px-4 py-3 text-[13.5px] text-expense">
+              <TriangleAlert className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>
+                {totals.over} {totals.over === 1 ? 'budget is' : 'budgets are'} over the limit this month.
+              </span>
             </p>
           )}
         </>
@@ -220,13 +224,7 @@ function BudgetRow({
   return (
     <li className="card p-4">
       <div className="mb-2.5 flex items-center gap-3">
-        <span
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[18px]"
-          style={{ backgroundColor: softColor(budget.category?.color) }}
-          aria-hidden="true"
-        >
-          {budget.category?.icon || '🧾'}
-        </span>
+        <CategoryIconChip icon={budget.category?.icon} color={budget.category?.color} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[14.5px] font-medium text-ink">{budget.category?.name}</p>
           <p className={cn('nums text-[12.5px]', labelTone)}>
@@ -340,7 +338,6 @@ function BudgetForm({
             <option value="">Select a category</option>
             {available.map((category) => (
               <option key={category._id} value={category._id}>
-                {category.icon ? `${category.icon}  ` : ''}
                 {category.name}
               </option>
             ))}

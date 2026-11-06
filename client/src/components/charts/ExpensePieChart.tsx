@@ -4,7 +4,7 @@ import { CHART_COLORS } from '@/utils/constants';
 import { formatCurrency } from '@/utils/format';
 import { useChartTooltip, useChartVar } from '@/utils/chartTheme';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { PieIcon } from '@/components/icons';
+import { ChartPie as PieIcon } from 'lucide-react';
 
 interface ExpensePieChartProps {
   data: CategoryStat[];

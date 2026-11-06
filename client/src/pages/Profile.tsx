@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
-import { KeyIcon, UserIcon } from '@/components/icons';
+import { KeyRound as KeyIcon, User as UserIcon } from 'lucide-react';
 import { CURRENCIES } from '@/utils/constants';
 import { apiMessage, cn } from '@/utils/format';
 

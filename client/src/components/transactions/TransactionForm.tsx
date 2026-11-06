@@ -232,7 +232,7 @@ export function TransactionForm({
           <option value="">Select a category</option>
           {options.map((category) => (
             <option key={category._id} value={category._id}>
-              {category.icon ? `${category.icon}  ` : ''}{category.name}
+              {category.name}
             </option>
           ))}
         </Select>

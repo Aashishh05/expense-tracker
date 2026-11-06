@@ -42,7 +42,7 @@ const categorySchema = new Schema<CategoryDocument>(
       },
       required: [true, 'Category type is required'],
     },
-    icon: { type: String, trim: true, maxlength: 10 },
+    icon: { type: String, trim: true, maxlength: 24 },
     color: { type: String, trim: true, maxlength: 7 },
   },
   { timestamps: true }

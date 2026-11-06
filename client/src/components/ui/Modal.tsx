@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/utils/format';
 import { IconButton } from './Button';
-import { XIcon } from '@/components/icons';
+import { X as XIcon } from 'lucide-react';
 
 interface ModalProps {
   open: boolean;

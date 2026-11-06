@@ -2,7 +2,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/utils/format';
 import { toggleTheme, useTheme } from '@/utils/theme';
-import { WalletIcon, HomeIcon, ReceiptIcon, TagIcon, TargetIcon, ChartIcon, UserIcon, PlusIcon, LogoutIcon, SunIcon, MoonIcon, RepeatIcon, UsersIcon } from '@/components/icons';
+import { Wallet as WalletIcon, House as HomeIcon, Receipt as ReceiptIcon, Tag as TagIcon, Target as TargetIcon, ChartColumn as ChartIcon, User as UserIcon, Plus as PlusIcon, LogOut as LogoutIcon, Sun as SunIcon, Moon as MoonIcon, Repeat as RepeatIcon, Users as UsersIcon } from 'lucide-react';
 const desktopNav = [
   { to: '/', label: 'Dashboard', icon: HomeIcon, end: true },
   { to: '/transactions', label: 'Transactions', icon: ReceiptIcon },

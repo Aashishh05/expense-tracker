@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import type { Transaction } from '@/types';
-import { formatDate, formatCurrency, softColor } from '@/utils/format';
-import { PencilIcon, TrashIcon, ReceiptIcon, RepeatIcon, PaperclipIcon } from '@/components/icons';
+import { formatDate, formatCurrency } from '@/utils/format';
+import { Pencil as PencilIcon, Trash2 as TrashIcon, Receipt as ReceiptIcon, Repeat as RepeatIcon, Paperclip as PaperclipIcon } from 'lucide-react';
+import { CategoryIconChip } from '@/components/categories/categoryIcons';
 import { IconButton } from '@/components/ui/Button';
 
 interface TransactionListProps {
@@ -23,13 +24,7 @@ function CategoryChip({ transaction }: { transaction: Transaction }) {
       : null;
   const color = category?.color || '#8a776d';
   return (
-    <span
-      className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[17px]"
-      style={{ backgroundColor: softColor(color) }}
-      aria-hidden="true"
-    >
-      {category?.icon || '🧾'}
-    </span>
+    <CategoryIconChip icon={category?.icon} color={color} />
   );
 }
 

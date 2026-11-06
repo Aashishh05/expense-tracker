@@ -15,7 +15,7 @@ import { FilterBar, type TxnFilterState } from '@/components/transactions/Filter
 import { TransactionList } from '@/components/transactions/TransactionList';
 import { ReceiptViewer } from '@/components/transactions/ReceiptViewer';
 import { Skeleton } from '@/components/ui/Loader';
-import { PlusIcon, ReceiptIcon, DownloadIcon, RepeatIcon, UsersIcon } from '@/components/icons';
+import { Plus as PlusIcon, Receipt as ReceiptIcon, Download as DownloadIcon, Repeat as RepeatIcon, Users as UsersIcon } from 'lucide-react';
 import { apiMessage, cn } from '@/utils/format';
 import { RateNote } from '@/components/ui/RateNote';
 import { Link, useLocation } from 'react-router-dom';

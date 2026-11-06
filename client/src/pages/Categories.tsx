@@ -9,9 +9,10 @@ import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/Loader';
-import { PlusIcon, TagIcon, PencilIcon, TrashIcon, CheckIcon } from '@/components/icons';
+import { Plus as PlusIcon, Tag as TagIcon, Pencil as PencilIcon, Trash2 as TrashIcon, Check as CheckIcon } from 'lucide-react';
+import { CATEGORY_ICONS, CategoryIconChip } from '@/components/categories/categoryIcons';
 import { SWATCH_COLORS } from '@/utils/constants';
-import { apiMessage, cn, softColor } from '@/utils/format';
+import { apiMessage, cn } from '@/utils/format';
 
 export default function Categories() {
   const { categories, refresh, loading, error } = useCategories();
@@ -105,13 +106,7 @@ export default function Categories() {
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {visible.map((category) => (
             <li key={category._id} className="card flex items-center gap-3 p-3.5">
-              <span
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[18px]"
-                style={{ backgroundColor: softColor(category.color) }}
-                aria-hidden="true"
-              >
-                {category.icon || '🏷️'}
-              </span>
+              <CategoryIconChip icon={category.icon} color={category.color} />
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-2 truncate text-[14.5px] font-medium text-ink">
                   {category.name}
@@ -190,10 +185,13 @@ function CategoryForm({
     handleSubmit,
     reset,
     setError,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<{ name: string; icon: string }>({ defaultValues: { name: '', icon: '' } });
 
   const [color, setColor] = useState<string>(SWATCH_COLORS[0]);
+  const pickedIcon = watch('icon');
 
   useEffect(() => {
     if (!open) return;
@@ -254,17 +252,27 @@ function CategoryForm({
         </div>
 
         <div>
-          <label className="label" htmlFor="category-icon">
-            Icon <span className="font-normal text-ink-3">(any emoji)</span>
-          </label>
-          <input
-            id="category-icon"
-            type="text"
-            maxLength={8}
-            placeholder="🐾"
-            className="input"
-            {...register('icon')}
-          />
+          <span className="label" id="category-icon-label">
+            Icon
+          </span>
+          <div className="grid grid-cols-6 gap-1.5" role="group" aria-labelledby="category-icon-label">
+            {CATEGORY_ICONS.map(({ name, label, Icon }) => (
+              <button
+                key={name}
+                type="button"
+                aria-pressed={pickedIcon === name}
+                aria-label={label}
+                title={label}
+                onClick={() => setValue('icon', name, { shouldDirty: true })}
+                className={cn(
+                  'pressable grid h-9 w-full place-items-center rounded-lg text-ink-2 transition-colors hover:bg-ink/5',
+                  pickedIcon === name && 'bg-accent-soft text-accent',
+                )}
+              >
+                <Icon className="h-[18px] w-[18px]" />
+              </button>
+            ))}
+          </div>
         </div>
 
         <div>

@@ -10,8 +10,9 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/Loader';
 import { RecurringForm } from '@/components/recurring/RecurringForm';
-import { PlusIcon, RepeatIcon, PencilIcon, TrashIcon, PauseIcon, PlayIcon } from '@/components/icons';
-import { apiMessage, cn, formatDate, formatCurrency, softColor } from '@/utils/format';
+import { Plus as PlusIcon, Repeat as RepeatIcon, Pencil as PencilIcon, Trash2 as TrashIcon, Pause as PauseIcon, Play as PlayIcon } from 'lucide-react';
+import { CategoryIconChip } from '@/components/categories/categoryIcons';
+import { apiMessage, cn, formatDate, formatCurrency } from '@/utils/format';
 
 const FREQ_LABELS: Record<RecurringFrequency, string> = {
   daily: 'Every day',
@@ -127,13 +128,7 @@ export default function Recurring() {
               typeof rule.category === 'object' && rule.category !== null ? rule.category : null;
             return (
               <li key={rule._id} className="card flex items-center gap-3 p-3.5">
-                <span
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[17px]"
-                  style={{ backgroundColor: softColor(category?.color) }}
-                  aria-hidden="true"
-                >
-                  {category?.icon || '🔁'}
-                </span>
+                <CategoryIconChip icon={category?.icon} color={category?.color} />
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-2 truncate text-[14.5px] font-medium text-ink">
                     {category?.name ?? 'Uncategorized'}
