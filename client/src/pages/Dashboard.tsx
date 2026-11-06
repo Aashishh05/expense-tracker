@@ -15,7 +15,7 @@ import { RecentRow } from '@/components/transactions/TransactionList';
 import { ExpensePieChart } from '@/components/charts/ExpensePieChart';
 import { MonthlyBarChart } from '@/components/charts/MonthlyBarChart';
 import { ArrowRight as ArrowRightIcon, Plus as PlusIcon, TrendingUp as TrendUpIcon, TrendingDown as TrendDownIcon, Scale as ScaleIcon, ChartColumn as ChartIcon } from 'lucide-react';
-import { apiMessage, formatCurrency, currentMonthKey, monthEndDay, currentYear, monthLabel } from '@/utils/format';
+import { apiMessage, formatCurrency, currentMonthKey, monthEndDay, currentYear } from '@/utils/format';
 import { RateNote } from '@/components/ui/RateNote';
 
 export default function Dashboard() {
@@ -88,27 +88,27 @@ export default function Dashboard() {
             <SummaryCard
               label="Total income"
               value={summary?.income ?? 0}
-              sub={`${monthLabel(month)} · income`}
               chipClass="bg-income-soft text-income"
               icon={<TrendUpIcon className="h-5 w-5" />}
               currency={user?.currency}
+              tag="Cash inflow"
             />
             <SummaryCard
               label="Total expense"
               value={summary?.expense ?? 0}
-              sub={`${monthLabel(month)} · spending`}
               chipClass="bg-expense-soft text-expense"
               icon={<TrendDownIcon className="h-5 w-5" />}
               currency={user?.currency}
+              tag="Cash outflow"
             />
             <SummaryCard
               label="Balance"
               value={summary?.balance ?? 0}
-              sub={`across ${summary?.count ?? 0} ${summary?.count === 1 ? 'entry' : 'entries'}`}
               chipClass="bg-accent-soft text-accent"
               icon={<ScaleIcon className="h-5 w-5" />}
               currency={user?.currency}
               balance
+              tag="Net position"
             />
           </div>
 
@@ -186,40 +186,46 @@ export default function Dashboard() {
 function SummaryCard({
   label,
   value,
-  sub,
   chipClass,
   icon,
   currency,
   balance = false,
+  tag,
 }: {
   label: string;
   value: number;
-  sub: string;
   chipClass: string;
   icon: ReactNode;
   currency?: string;
   balance?: boolean;
+  tag?: string;
 }) {
   const negative = balance && value < 0;
   return (
-    <div className="card p-5">
+    <div className="card relative flex flex-col justify-between p-5">
       <div className="flex items-start gap-3.5">
         <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${chipClass}`}>
           {icon}
         </span>
-        <div className="min-w-0">
-          <p className="text-[13px] text-ink-2">{label}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-[14px] font-medium text-ink">{label}</p>
           <p
-            className={`nums mt-0.5 truncate text-[21px] font-semibold tracking-tight ${
+            className={`nums mt-1 truncate text-[24px] font-semibold tracking-tight ${
               balance && negative ? 'text-expense' : 'text-ink'
             }`}
           >
             {formatCurrency(balance && negative ? -value : value, currency ?? 'NPR')}
             {negative && <span className="ml-1 text-[12px] font-medium text-expense">over</span>}
           </p>
-          <p className="mt-0.5 text-[12px] text-ink-3">{sub}</p>
         </div>
       </div>
+      {tag && (
+        <div className="mt-2.5 flex justify-end">
+          <span className="text-[11.5px] font-medium text-ink-3">
+            {tag}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
