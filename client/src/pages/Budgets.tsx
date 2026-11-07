@@ -255,8 +255,8 @@ function BudgetRow({
       </div>
       <p className={cn('nums mt-1.5 text-[12px]', labelTone)}>
         {over
-          ? `${budget.percent}% of budget used`
-          : `${budget.percent}% used · ${formatCurrency(budget.remaining, currency)} left`}
+          ? `${formatCurrency(Math.abs(budget.remaining), currency)} over budget`
+          : `${formatCurrency(budget.remaining, currency)} left`}
       </p>
     </li>
   );
