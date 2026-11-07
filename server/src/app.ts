@@ -20,10 +20,15 @@ const app: Express = express();
 app.set('trust proxy', 1);
 
 // Security & parsing
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : 'http://localhost:5173',
+    origin: allowedOrigins.length > 0 ? allowedOrigins : 'http://localhost:5173',
     credentials: true,
   })
 );
