@@ -15,7 +15,11 @@ export interface MongoDateFilter {
 export function parseDay(value: unknown): Date | null {
   if (!value || !DAY_REGEX.test(String(value))) return null;
   const date = new Date(`${value}T00:00:00.000Z`);
-  return Number.isNaN(date.getTime()) ? null : date;
+  if (Number.isNaN(date.getTime())) return null;
+  // Reject impossible calendar dates that JS would roll over
+  // (e.g. 2026-02-30 parses as 2026-03-02).
+  if (date.toISOString().slice(0, 10) !== String(value)) return null;
+  return date;
 }
 
 /** Exclusive end bound for an inclusive YYYY-MM-DD range. */
