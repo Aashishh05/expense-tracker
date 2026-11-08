@@ -4,6 +4,7 @@ import User from '../models/User';
 import asyncHandler from '../utils/asyncHandler';
 import { resolveMemberGroup, planSettlement } from '../utils/groups';
 import { dateFilterFromRange } from '../utils/dates';
+import { sendMail } from '../utils/mailer';
 import type { Request } from 'express';
 import type { FilterQuery, Types } from 'mongoose';
 import type { ITransaction } from '../models/Transaction';
@@ -157,24 +158,73 @@ export const addMember = asyncHandler(async (req, res) => {
   }
 
   const { email } = req.body as { email: string };
-  const user = await User.findOne({ email }).select('name email');
-  if (!user) {
-    return res.status(400).json({
-      success: false,
-      message: 'Validation failed',
-      errors: [{ field: 'email', msg: 'No Expense Tracker account uses that email yet' }],
-    });
-  }
-  if (group.members.some((member) => String(member.user) === String(user._id))) {
-    return res.status(409).json({ success: false, message: 'That person is already in this group' });
+  const lowerEmail = email.toLowerCase().trim();
+
+  // Check if user already exists
+  const existingUser = await User.findOne({ email: lowerEmail }).select('name _id');
+  if (existingUser) {
+    // User exists - add them to the group (existing behavior)
+    if (group.members.some((member) => String(member.user) === String(existingUser._id))) {
+      return res.status(409).json({ success: false, message: 'That person is already in this group' });
+    }
+
+    group.members.push({ user: existingUser._id, role: 'member', joinedAt: new Date() });
+    await group.save();
+    await group.populate('members.user', MEMBER_FIELDS);
+
+    return res.json({ success: true, message: 'Member added', data: group });
   }
 
-  group.members.push({ user: user._id, role: 'member', joinedAt: new Date() });
+  // User does not exist - create a pending invitation
+  // Check for duplicate pending invitations
+  const alreadyPending = group.pendingInvitations.some(
+    (inv) => inv.email.toLowerCase() === lowerEmail
+  );
+  if (alreadyPending) {
+    return res.status(409).json({ success: false, message: 'An invitation has already been sent to this email' });
+  }
+
+  const invitationId = `inv_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  group.pendingInvitations.push({
+    email: lowerEmail,
+    role: 'member',
+    invitationId,
+    invitedAt: new Date(),
+  });
   await group.save();
-  await group.populate('members.user', MEMBER_FIELDS);
 
-  res.json({ success: true, message: 'Member added', data: group });
+  // Send invitation email
+  await sendGroupInvitationEmail(lowerEmail, group.name, invitationId);
+
+  res.json({
+    success: true,
+    message: 'Invitation sent — the person will receive an email to create an account and join the group',
+    data: group,
+  });
 });
+
+/**
+ * Sends an invitation email to join a group.
+ * In development this logs to console and writes to .mail-outbox.txt.
+ * In production, replace with SendGrid/SES/etc.
+ */
+async function sendGroupInvitationEmail(to: string, groupName: string, invitationId: string): Promise<void> {
+  const clientUrl = process.env.CLIENT_URL ?? 'http://localhost:5173';
+  const loginUrl = `${clientUrl}/auth/signup?invite=${invitationId}`;
+  const text = `
+Hello!
+
+You've been invited to join the group "${groupName}" on Expense Tracker.
+
+Click the link below to create your account and join the group:
+${loginUrl}
+
+If you didn't request this invitation, you can safely ignore this email.
+
+— Expense Tracker Team
+`;
+  await sendMail({ to: to, subject: `You're invited to join "${groupName}" on Expense Tracker`, text });
+}
 
 const SORTS: Record<string, { date: 1 | -1 } | { amount: 1 | -1 }> = {
   date: { date: 1 },

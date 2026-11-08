@@ -10,6 +10,16 @@ export interface IGroupMember {
 }
 
 /**
+ * Pending invitation before the person signs up.
+ */
+export interface IPendingInvitation {
+  email: string;
+  role: GroupRole;
+  invitationId: string;
+  invitedAt: Date;
+}
+
+/**
  * A group of app users sharing expenses. Members are permanent once added:
  * removal would silently distort the equal-split maths, so the only way to
  * dissolve a group is the owner deleting it (transactions are kept).
@@ -18,8 +28,10 @@ export interface IGroup {
   name: string;
   owner: Types.ObjectId;
   members: IGroupMember[];
+  pendingInvitations: IPendingInvitation[];
 }
 
+/** GroupDocument also has createdAt/updatedAt from timestamps. */
 export interface GroupDocument extends Document<Types.ObjectId>, IGroup {
   createdAt: Date;
   updatedAt: Date;
@@ -48,6 +60,31 @@ const memberSchema = new Schema(
   { _id: false }
 );
 
+const pendingInvitationSchema = new Schema(
+  {
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true,
+    },
+    role: {
+      type: String,
+      enum: ['member'],
+      default: 'member',
+    },
+    invitationId: {
+      type: String,
+      required: true,
+    },
+    invitedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false }
+);
+
 const groupSchema = new Schema<GroupDocument>(
   {
     name: {
@@ -69,12 +106,17 @@ const groupSchema = new Schema<GroupDocument>(
         message: 'A group can have 1-12 members',
       },
     },
+    pendingInvitations: {
+      type: [pendingInvitationSchema],
+      default: [],
+    },
   },
   { timestamps: true }
 );
 
 groupSchema.index({ 'members.user': 1 });
 groupSchema.index({ 'members.user': 1, 'members.role': 1 });
+groupSchema.index({ 'pendingInvitations.email': 1 });
 
 const Group = model<GroupDocument>('Group', groupSchema);
 
