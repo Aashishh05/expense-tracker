@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
-import { listBudgets, saveBudget, updateBudget, deleteBudget } from '@/api/budgets';
+import { saveBudget, updateBudget, deleteBudget } from '@/api/budgets';
 import type { Budget } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { useCategories } from '@/hooks/useCategories';
+import { useBudgets } from '@/hooks/useBudgets';
 import { Button, IconButton } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input, Select } from '@/components/ui/Input';
@@ -15,39 +16,29 @@ import { ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon, Plus 
 import { CategoryIconChip } from '@/components/categories/categoryIcons';
 import { apiMessage, cn, formatCurrency, currentMonthKey, monthLabel, shiftMonth } from '@/utils/format';
 import { RateNote } from '@/components/ui/RateNote';
+import { Pagination } from '@/components/ui/Pagination';
 
 export default function Budgets() {
   const { user } = useAuth();
   const { categories, refresh: refreshCategories } = useCategories();
   const [month, setMonth] = useState(currentMonthKey());
 
-  const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [nonce, setNonce] = useState(0);
+  const [page, setPage] = useState(1);
+
+  const { data: budgets, pagination, loading, refetch } = useBudgets({
+    month,
+    page,
+    limit: 10,
+  });
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Budget | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Budget | null>(null);
   const [deletePending, setDeletePending] = useState(false);
 
-  const refetch = useCallback(() => setNonce((n) => n + 1), []);
+  const currency = user?.currency ?? 'NPR';
 
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    listBudgets(month)
-      .then((res) => active && setBudgets(res.data))
-      .catch((err) => active && toast.error(apiMessage(err, 'Could not load budgets')))
-      .finally(() => active && setLoading(false));
-    return () => {
-      active = false;
-    };
-  }, [month, nonce]);
-
-  const expenseCategories = categories.filter((c) => c.type === 'expense');
-  const budgetedCategoryIds = new Set(budgets.map((b) => b.category?._id));
-  const available = expenseCategories.filter((c) => !budgetedCategoryIds.has(c._id));
-
+  // Compute totals from the current page of budgets
   const totals = budgets.reduce(
     (acc, budget) => {
       acc.limit += budget.limit;
@@ -57,6 +48,10 @@ export default function Budgets() {
     },
     { limit: 0, spent: 0, over: 0 }
   );
+
+  const expenseCategories = categories.filter((c) => c.type === 'expense');
+  const budgetedCategoryIds = new Set(budgets.map((b) => b.category?._id));
+  const available = expenseCategories.filter((c) => !budgetedCategoryIds.has(c._id));
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
@@ -72,8 +67,6 @@ export default function Budgets() {
       setDeleteTarget(null);
     }
   };
-
-  const currency = user?.currency ?? 'NPR';
 
   return (
     <>
@@ -157,6 +150,10 @@ export default function Budgets() {
             </p>
           )}
         </>
+      )}
+
+      {pagination && budgets.length > 0 && (
+        <Pagination pagination={pagination} onChange={setPage} />
       )}
 
       <BudgetForm

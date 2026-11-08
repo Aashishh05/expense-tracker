@@ -26,18 +26,23 @@ async function resolveExpenseCategory(
   return { category };
 }
 
-// GET /api/budgets?month=2026-11
+// GET /api/budgets?month=2026-11&page=1&limit=10
 export const list = asyncHandler(async (req, res) => {
   const month = (req.query.month as string) || currentMonthKey();
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const skip = (page - 1) * limit;
   const range = monthRange(month);
   if (!range) {
     return res.status(400).json({ success: false, message: 'Invalid month' });
   }
 
-  const budgets = await Budget.find({ user: req.user._id, month }).populate(
-    'category',
-    'name type color icon'
-  );
+  const budgets = await Budget.find({ user: req.user._id, month })
+    .populate('category', 'name type color icon')
+    .skip(skip)
+    .limit(limit);
+
+  const total = await Budget.countDocuments({ user: req.user._id, month });
 
   const spentRows = await Transaction.aggregate<SpentRow>([
     {
@@ -64,7 +69,17 @@ export const list = asyncHandler(async (req, res) => {
     };
   });
 
-  res.json({ success: true, data, meta: { month } });
+  res.json({
+    success: true,
+    data,
+    meta: { month },
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
+    },
+  });
 });
 
 // POST /api/budgets  (create or upsert per user+category+month)

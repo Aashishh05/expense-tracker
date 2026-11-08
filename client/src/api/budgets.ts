@@ -1,8 +1,14 @@
 import client from './client';
-import type { Budget } from '@/types';
+import type { Budget, Pagination } from '@/types';
 
-export async function listBudgets(month?: string): Promise<{ data: Budget[] }> {
-  const { data } = await client.get('/budgets', { params: month ? { month } : undefined });
+export async function listBudgets(
+  month?: string,
+  page?: number,
+  limit?: number
+): Promise<{ data: Budget[]; pagination: Pagination }> {
+  const { data } = await client.get('/budgets', {
+    params: month ? { month, page, limit } : { page, limit },
+  });
   return data;
 }
 
