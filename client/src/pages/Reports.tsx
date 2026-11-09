@@ -104,7 +104,7 @@ export default function Reports() {
           </div>
         </div>
         <p className="mb-3 text-[12.5px] text-ink-2">
-          {byCategory.length} {byCategory.length === 1 ? 'category' : 'categories'} with spending
+          {byCategory.length} {byCategory.length === 1 ? 'category' : 'categories'}
         </p>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -123,7 +123,7 @@ export default function Reports() {
                         <span className="truncate font-medium text-ink">{category.name}</span>
                       </span>
                       <span className="nums shrink-0 text-ink-2">
-                        {formatCurrency(category.total, currency)} · <span className="nums">{share}%</span>
+                        {formatCurrency(category.total, currency)} <span className="nums">- {share}%</span>
                       </span>
                     </div>
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-ink/[0.05]">
