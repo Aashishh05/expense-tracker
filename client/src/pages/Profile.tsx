@@ -22,11 +22,7 @@ export default function Profile() {
     defaultValues: { currentPassword: '', newPassword: '', confirm: '' },
   });
 
-  const memberSince = user?.createdAt
-    ? new Intl.DateTimeFormat('en', { day: 'numeric', month: 'long', year: 'numeric' }).format(
-        new Date(user.createdAt)
-      )
-    : null;
+  
 
   const onProfile = profileForm.handleSubmit(async (values) => {
     try {
@@ -72,9 +68,6 @@ export default function Profile() {
             <div className="min-w-0">
               <p className="truncate text-[16px] font-semibold text-ink">{user?.name}</p>
               <p className="truncate text-[13.5px] text-ink-2">{user?.email}</p>
-              {memberSince && (
-                <p className="mt-0.5 text-[12px] text-ink-3">Member since {memberSince}</p>
-              )}
             </div>
           </div>
         </section>
