@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Input, Select } from '@/components/ui/Input';
 import { KeyRound as KeyIcon, User as UserIcon } from 'lucide-react';
 import { CURRENCIES } from '@/utils/constants';
@@ -14,6 +15,7 @@ type PasswordValues = { currentPassword: string; newPassword: string; confirm: s
 export default function Profile() {
   const { user, saveProfile, changePassword, logout } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
 
   const profileForm = useForm<ProfileValues>({
     defaultValues: { name: user?.name ?? '', currency: user?.currency ?? 'NPR' },
@@ -188,11 +190,20 @@ export default function Profile() {
                 Signed in on this browser — sign out to end it.
               </p>
             </div>
-            <Button variant="danger" onClick={logout}>
+            <Button variant="danger" onClick={() => setLogoutOpen(true)}>
               Log out
             </Button>
           </div>
         </section>
+
+        <ConfirmDialog
+          open={logoutOpen}
+          title="Sign out?"
+          message="You'll need to sign in again to access your account."
+          confirmLabel="Sign out"
+          onConfirm={logout}
+          onClose={() => setLogoutOpen(false)}
+        />
       </div>
     </>
   );

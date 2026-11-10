@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/utils/format';
 import { toggleTheme, useTheme } from '@/utils/theme';
 import { Wallet as WalletIcon, House as HomeIcon, Receipt as ReceiptIcon, Tag as TagIcon, Target as TargetIcon, ChartColumn as ChartIcon, User as UserIcon, Plus as PlusIcon, LogOut as LogoutIcon, Sun as SunIcon, Moon as MoonIcon, Repeat as RepeatIcon, Users as UsersIcon } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 const desktopNav = [
   { to: '/', label: 'Dashboard', icon: HomeIcon, end: true },
   { to: '/transactions', label: 'Transactions', icon: ReceiptIcon },
@@ -67,6 +69,7 @@ export default function AppLayout() {
   const location = useLocation();
   const theme = useTheme();
   const onTransactions = location.pathname === '/transactions';
+  const [logoutOpen, setLogoutOpen] = useState(false);
 
   const openAddTransaction = () => {
     navigate('/transactions', { state: { add: true } });
@@ -111,7 +114,7 @@ export default function AppLayout() {
               type="button"
               aria-label="Log out"
               title="Log out"
-              onClick={logout}
+              onClick={() => setLogoutOpen(true)}
               className="pressable grid h-8 w-8 place-items-center rounded-lg text-ink-3 hover:bg-ink/[0.05] hover:text-expense"
             >
               <LogoutIcon className="h-[17px] w-[17px]" />
@@ -182,6 +185,15 @@ export default function AppLayout() {
           <MobileTab key={item.to} {...item} />
         ))}
       </nav>
+
+      <ConfirmDialog
+        open={logoutOpen}
+        title="Sign out?"
+        message="You'll need to sign in again to access your account."
+        confirmLabel="Sign out"
+        onConfirm={logout}
+        onClose={() => setLogoutOpen(false)}
+      />
     </div>
   );
 }
