@@ -18,6 +18,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { RateNote } from '@/components/ui/RateNote';
 import { Button, IconButton } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { DropdownMenu } from '@/components/ui/DropdownMenu';
 import { Input } from '@/components/ui/Input';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -26,7 +27,7 @@ import { Skeleton } from '@/components/ui/Loader';
 import { TransactionForm } from '@/components/transactions/TransactionForm';
 import { TransactionList } from '@/components/transactions/TransactionList';
 import { ReceiptViewer } from '@/components/transactions/ReceiptViewer';
-import { Plus as PlusIcon, Users as UsersIcon, ChevronLeft as ChevronLeftIcon, Pencil as PencilIcon, Trash2 as TrashIcon } from 'lucide-react';
+import { Plus as PlusIcon, Users as UsersIcon, ChevronLeft as ChevronLeftIcon } from 'lucide-react';
 import { apiMessage, cn, formatCurrency, formatDate } from '@/utils/format';
 
 const PAGE_LIMIT = 20;
@@ -263,14 +264,13 @@ function GroupDetail({ groupId }: { groupId: string }) {
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {group && isOwner && (
-            <>
-              <IconButton label="Rename group" onClick={() => setRenameOpen(true)}>
-                <PencilIcon className="h-4.5 w-4.5" />
-              </IconButton>
-              <IconButton label="Delete group" tone="danger" onClick={() => setDeleteOpen(true)}>
-                <TrashIcon className="h-4.5 w-4.5" />
-              </IconButton>
-            </>
+            <DropdownMenu
+              items={[
+                { label: 'Rename group', onClick: () => setRenameOpen(true) },
+                { label: 'Delete group', onClick: () => setDeleteOpen(true), tone: 'danger' },
+              ]}
+              align="right"
+            />
           )}
           <Button onClick={() => setFormOpen(true)}>
             <PlusIcon className="h-4.5 w-4.5" />
