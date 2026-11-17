@@ -5,6 +5,11 @@ import asyncHandler from '../utils/asyncHandler';
 import { resolveMemberGroup, planSettlement } from '../utils/groups';
 import { dateFilterFromRange } from '../utils/dates';
 import { sendMail } from '../utils/mailer';
+import {
+  createInvitationToken,
+  hashInvitationToken,
+  INVITATION_TTL_MS,
+} from '../utils/invitations';
 import type { Request } from 'express';
 import type { FilterQuery, Types } from 'mongoose';
 import type { ITransaction } from '../models/Transaction';
@@ -13,15 +18,33 @@ import type { CategoryType } from '../models/Category';
 const MEMBER_FIELDS = 'name email';
 const CATEGORY_FIELDS = 'name type color icon';
 const MAX_MEMBERS = 12;
+/** Outstanding invitations are capped so a group can't fan out unlimited mail. */
+const MAX_PENDING_INVITATIONS = MAX_MEMBERS;
 
 /** True when the requester owns the group (rename/delete/invite). */
 function isOwner(group: GroupDocument, req: Request): boolean {
   return String(group.owner) === String(req.user._id);
 }
 
+/**
+ * Serializes a group for the API. Invitation tokens never leave the server:
+ * the owner sees who is still pending, every other member sees nothing.
+ */
+function presentGroup(group: GroupDocument, req: Request): Record<string, unknown> {
+  const data = group.toObject() as Record<string, unknown>;
+  data.pendingInvitations = isOwner(group, req)
+    ? (group.pendingInvitations ?? []).map((invite) => ({
+        email: invite.email,
+        invitedAt: invite.invitedAt,
+      }))
+    : [];
+  return data;
+}
+
 // GET /api/groups
 export const list = asyncHandler(async (req, res) => {
   const groups = await Group.find({ 'members.user': req.user._id })
+    .select('-pendingInvitations')
     .populate('members.user', MEMBER_FIELDS)
     .sort({ createdAt: -1 })
     .lean();
@@ -41,7 +64,11 @@ export const create = asyncHandler(async (req, res) => {
 
   const populated = await Group.findById(group._id).populate('members.user', MEMBER_FIELDS);
 
-  res.status(201).json({ success: true, message: 'Group created', data: populated });
+  res.status(201).json({
+    success: true,
+    message: 'Group created',
+    data: populated ? presentGroup(populated, req) : group,
+  });
 });
 
 // GET /api/groups/:id
@@ -52,7 +79,7 @@ export const detail = asyncHandler(async (req, res) => {
   }
 
   await group.populate('members.user', MEMBER_FIELDS);
-  res.json({ success: true, data: group });
+  res.json({ success: true, data: presentGroup(group, req) });
 });
 
 // GET /api/groups/:id/stats — totals, per-member balances and settle-up plan
@@ -120,7 +147,7 @@ export const update = asyncHandler(async (req, res) => {
   await group.save();
   await group.populate('members.user', MEMBER_FIELDS);
 
-  res.json({ success: true, message: 'Group renamed', data: group });
+  res.json({ success: true, message: 'Group renamed', data: presentGroup(group, req) });
 });
 
 // DELETE /api/groups/:id  (owner only; transactions detach and stay)
@@ -141,6 +168,60 @@ export const remove = asyncHandler(async (req, res) => {
     success: true,
     message: 'Group deleted — its transactions were kept as personal entries',
     data: { _id: groupId },
+  });
+});
+
+// POST /api/groups/invitations/accept  { invitationId } — redeem an emailed
+// invitation token. Single use, bound to the invited address, 14-day expiry.
+export const acceptInvitation = asyncHandler(async (req, res) => {
+  const { invitationId } = req.body as { invitationId: string };
+  const hash = hashInvitationToken(invitationId);
+  const email = req.user.email.toLowerCase();
+
+  const group = await Group.findOne({
+    pendingInvitations: {
+      $elemMatch: {
+        invitationId: hash,
+        email,
+        invitedAt: { $gte: new Date(Date.now() - INVITATION_TTL_MS) },
+      },
+    },
+  });
+
+  if (!group) {
+    return res.status(400).json({
+      success: false,
+      message: 'This invitation is invalid, has expired or has already been used.',
+    });
+  }
+
+  const alreadyMember = group.members.some(
+    (member) => String(member.user) === String(req.user._id)
+  );
+
+  if (!alreadyMember) {
+    if (group.members.length >= MAX_MEMBERS) {
+      return res.status(400).json({
+        success: false,
+        message: `This group already has ${MAX_MEMBERS} members.`,
+      });
+    }
+    group.members.push({ user: req.user._id, role: 'member', joinedAt: new Date() });
+  }
+
+  // Single use: the invitation disappears once redeemed.
+  group.pendingInvitations = group.pendingInvitations.filter(
+    (invite) => invite.invitationId !== hash
+  );
+  await group.save();
+  await group.populate('members.user', MEMBER_FIELDS);
+
+  res.json({
+    success: true,
+    message: alreadyMember
+      ? `You are already a member of “${group.name}”`
+      : `You joined “${group.name}”`,
+    data: presentGroup(group, req),
   });
 });
 
@@ -172,7 +253,7 @@ export const addMember = asyncHandler(async (req, res) => {
     await group.save();
     await group.populate('members.user', MEMBER_FIELDS);
 
-    return res.json({ success: true, message: 'Member added', data: group });
+    return res.json({ success: true, message: 'Member added', data: presentGroup(group, req) });
   }
 
   // User does not exist - create a pending invitation
@@ -183,23 +264,30 @@ export const addMember = asyncHandler(async (req, res) => {
   if (alreadyPending) {
     return res.status(409).json({ success: false, message: 'An invitation has already been sent to this email' });
   }
+  if (group.members.length + group.pendingInvitations.length >= MAX_PENDING_INVITATIONS) {
+    return res.status(400).json({
+      success: false,
+      message: 'This group has as many outstanding invitations as it can hold members',
+    });
+  }
 
-  const invitationId = `inv_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  // Only the hash is stored: a leaked row can't be replayed as an invite link.
+  const { token, hash } = createInvitationToken();
   group.pendingInvitations.push({
     email: lowerEmail,
     role: 'member',
-    invitationId,
+    invitationId: hash,
     invitedAt: new Date(),
   });
   await group.save();
 
-  // Send invitation email
-  await sendGroupInvitationEmail(lowerEmail, group.name, invitationId);
+  // Send invitation email (the raw token only ever exists in that message)
+  await sendGroupInvitationEmail(lowerEmail, group.name, token);
 
   res.json({
     success: true,
-    message: 'Invitation sent — the person will receive an email to create an account and join the group',
-    data: group,
+    message: 'Invitation sent — they will get an email link to create an account and join the group',
+    data: presentGroup(group, req),
   });
 });
 
@@ -208,18 +296,22 @@ export const addMember = asyncHandler(async (req, res) => {
  * In development this logs to console and writes to .mail-outbox.txt.
  * In production, replace with SendGrid/SES/etc.
  */
-async function sendGroupInvitationEmail(to: string, groupName: string, invitationId: string): Promise<void> {
-  const clientUrl = process.env.CLIENT_URL ?? 'http://localhost:5173';
-  const loginUrl = `${clientUrl}/auth/signup?invite=${invitationId}`;
+async function sendGroupInvitationEmail(to: string, groupName: string, token: string): Promise<void> {
+  const clientUrl = (process.env.CLIENT_URL ?? 'http://localhost:5173')
+    .split(',')[0]
+    .trim()
+    .replace(/\/$/, '');
+  const signupUrl = `${clientUrl}/register?invite=${encodeURIComponent(token)}`;
   const text = `
 Hello!
 
 You've been invited to join the group "${groupName}" on Expense Tracker.
 
 Click the link below to create your account and join the group:
-${loginUrl}
+${signupUrl}
 
-If you didn't request this invitation, you can safely ignore this email.
+This link works for 14 days and only for this email address. If you didn't
+expect this invitation, you can safely ignore this email.
 
 — Expense Tracker Team
 `;

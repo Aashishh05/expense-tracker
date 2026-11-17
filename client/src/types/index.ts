@@ -49,6 +49,8 @@ export interface Group {
   name: string;
   owner: string;
   members: Array<{ user: GroupMemberUser; role: GroupRole; joinedAt: string }>;
+  /** Owner-only summary of invitations still awaiting sign-up. */
+  pendingInvitations?: Array<{ email: string; invitedAt: string }>;
   createdAt: string;
 }
 

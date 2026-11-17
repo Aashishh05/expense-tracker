@@ -30,7 +30,9 @@ charts. Installable as a PWA.
 - **Receipt uploads** — attach a photo/PDF (JPG · PNG · WebP · PDF, ≤ 5 MB) to any transaction and
   view it in-app; group members can open the receipts of shared expenses too
 - **Shared group expenses** — groups of up to 12 members log shared expenses that are split
-  equally; live per-member balances and a "who pays whom" settle-up plan
+  equally; live per-member balances and a "who pays whom" settle-up plan. Owners add members by
+  email: existing accounts join immediately, unknown addresses get a 14-day invitation link that
+  signs them up and joins the group (bound to the invited address, single use)
 - **PWA** — installable app: service worker + web manifest, offline-ready app shell; API responses
   are deliberately never cached
 - **Security** — bcrypt hashing, input validation, rate limiting, helmet, CORS, mongo-sanitize
@@ -232,7 +234,7 @@ npm run dev              # → http://localhost:5173
 | Categories   | `GET/POST /categories` · `PUT/DELETE /categories/:id`              |
 | Budgets      | `GET/POST /budgets` · `PUT/DELETE /budgets/:id`                    |
 | Recurring    | `GET/POST /recurring` · `PUT/DELETE /recurring/:id`                |
-| Groups       | `GET/POST /groups` · `GET/PUT/DELETE /groups/:id` · `GET /groups/:id/stats` · `GET /groups/:id/transactions` · `POST /groups/:id/members` |
+| Groups       | `GET/POST /groups` · `GET/PUT/DELETE /groups/:id` · `GET /groups/:id/stats` · `GET /groups/:id/transactions` · `POST /groups/:id/members` · `POST /groups/invitations/accept` |
 | Stats        | `GET /stats/summary` · `GET /stats/by-category` · `GET /stats/monthly` |
 
 All list endpoints support query params (`type`, `category`, `startDate`, `endDate`, `search`,
@@ -251,6 +253,10 @@ Response envelope: `{ "success": true, "data": …, "pagination": … }` — err
   timestamp, so grouping never shifts.
 - The token lives in `localStorage` (kept simple per the MVP spec; switch to httpOnly cookies for
   production-grade XSS resistance).
+- Changing or resetting a password stamps `passwordChangedAt`, and every JWT issued before that
+  moment is rejected — a reset really does end all existing sessions.
+- CSV export neutralizes cells beginning with `=`, `+`, `-` or `@`, so a crafted note cannot turn
+  into a live spreadsheet formula when the file is opened in Excel/Sheets.
 - `POST /budgets` is an upsert on (user, category, month).
 - Amounts are stored in the NPR base. Display conversion uses the static snapshot in
   `client/src/utils/currency.ts` (see `RATE_DATE`) — no runtime API. The CSV export always
@@ -267,6 +273,11 @@ Response envelope: `{ "success": true, "data": …, "pagination": … }` — err
 - Group members are permanent by design (that keeps the equal-split math honest); deleting a
   group keeps its transactions as personal expenses of whoever logged them. Group entries are
   expense-only and always split equally across the current members.
+- Invitation links carry a 256-bit random token; only its SHA-256 hash is stored, it is bound to
+  the invited email, it is deleted once redeemed (single use) and it expires after 14 days.
+  Accepting is an authenticated action (`POST /api/groups/invitations/accept`) triggered by
+  `/register?invite=…` or `/login?invite=…`. Invitation tokens are never included in group API
+  responses — the owner only sees the pending email addresses.
 - The recurring dedupe index is a unique **partial** index on (user, rule, date) — manual entries
   never hit it, so two personal transactions on the same date are fine. (A plain unique-sparse
   compound index would have wrongly blocked them.)

@@ -9,6 +9,8 @@ export interface IUser {
   email: string;
   password: string;
   currency: string;
+  /** Stamped on every password change — older JWTs are rejected from then on. */
+  passwordChangedAt?: Date | null;
   /** SHA-256 hash of the pending password-reset token (null when none). */
   resetPasswordToken?: string | null;
   resetPasswordExpires?: Date | null;
@@ -55,6 +57,10 @@ const userSchema = new Schema<UserDocument, Model<UserDocument>, UserInstanceMet
       minlength: 3,
       maxlength: 3,
     },
+    passwordChangedAt: {
+      type: Date,
+      default: null,
+    },
     resetPasswordToken: {
       type: String,
       default: null,
@@ -72,6 +78,8 @@ userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+  // Invalidate tokens issued before this change (reset = log out everywhere).
+  this.passwordChangedAt = new Date();
   next();
 });
 
@@ -85,6 +93,7 @@ userSchema.methods.comparePassword = function (this: UserDocument, candidate: st
 (userSchema.methods as Record<string, unknown>).toJSON = function (this: UserDocument) {
   const obj = this.toObject();
   delete obj.password;
+  delete obj.passwordChangedAt;
   delete obj.resetPasswordToken;
   delete obj.resetPasswordExpires;
   delete obj.__v;

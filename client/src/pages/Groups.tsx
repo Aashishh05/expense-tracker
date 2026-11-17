@@ -102,7 +102,7 @@ function GroupList() {
           <EmptyState
             icon={<UsersIcon className="h-6 w-6" />}
             title="No groups yet"
-            description="Create a group, invite people who already have an account, and log shared expenses together."
+            description="Create a group, invite people by email, and log shared expenses together."
           />
         </div>
       ) : (
@@ -225,7 +225,7 @@ function GroupDetail({ groupId }: { groupId: string }) {
       const response = await addGroupMember(group._id, email);
       setGroup(response.data);
       setMemberEmail('');
-      toast.success('Member added');
+      toast.success(response.message ?? 'Member added');
     } catch (err) {
       toast.error(apiMessage(err, 'Could not add that member'));
     } finally {
@@ -325,7 +325,7 @@ function GroupDetail({ groupId }: { groupId: string }) {
                   type="email"
                   value={memberEmail}
                   onChange={(e) => setMemberEmail(e.target.value)}
-                  placeholder="Invite by email (they need an account)"
+                  placeholder="Invite by email"
                   className="input h-10 max-w-[320px] flex-1"
                 />
                 <Button
@@ -338,6 +338,20 @@ function GroupDetail({ groupId }: { groupId: string }) {
                   Add member
                 </Button>
               </form>
+            )}
+
+            {isOwner && group.pendingInvitations && group.pendingInvitations.length > 0 && (
+              <div className="mt-3 border-t border-line/70 pt-3">
+                <p className="text-[12.5px] font-medium text-ink-2">Awaiting sign-up</p>
+                <ul className="mt-1.5 space-y-0.5">
+                  {group.pendingInvitations.map((invite) => (
+                    <li key={invite.email} className="text-[13px] text-ink-2">
+                      {invite.email}
+                      <span className="text-ink-3"> · invited {formatDate(invite.invitedAt)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
 

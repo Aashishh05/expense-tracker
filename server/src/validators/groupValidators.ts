@@ -27,6 +27,14 @@ const addMember = [
     .customSanitizer((value: unknown) => String(value).toLowerCase()),
 ];
 
+const acceptInvitation = [
+  body('invitationId')
+    .isHexadecimal()
+    .withMessage('Invalid invitation')
+    .isLength({ min: 64, max: 64 })
+    .withMessage('Invalid invitation'),
+];
+
 const listTransactions = [
   param('id').isMongoId().withMessage('Invalid group id'),
   query('type').optional().isIn(['income', 'expense']).withMessage('Invalid type filter'),
@@ -46,4 +54,4 @@ const listTransactions = [
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Invalid limit').toInt(),
 ];
 
-export { create, update, idParam, addMember, listTransactions };
+export { create, update, idParam, addMember, acceptInvitation, listTransactions };

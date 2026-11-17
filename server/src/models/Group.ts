@@ -15,6 +15,7 @@ export interface IGroupMember {
 export interface IPendingInvitation {
   email: string;
   role: GroupRole;
+  /** SHA-256 hash of the emailed token — the link itself is never stored. */
   invitationId: string;
   invitedAt: Date;
 }

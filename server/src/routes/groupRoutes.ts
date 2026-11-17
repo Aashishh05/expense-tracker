@@ -8,6 +8,7 @@ import {
   update,
   remove,
   addMember,
+  acceptInvitation,
   listTransactions,
 } from '../controllers/groupController';
 import {
@@ -15,6 +16,7 @@ import {
   update as updateValidator,
   idParam,
   addMember as addMemberValidator,
+  acceptInvitation as acceptInvitationValidator,
   listTransactions as transactionsValidator,
 } from '../validators/groupValidators';
 import validate from '../middleware/validate';
@@ -26,6 +28,7 @@ router.use(protect);
 
 router.get('/', list);
 router.post('/', createValidator, validate, create);
+router.post('/invitations/accept', acceptInvitationValidator, validate, acceptInvitation);
 router.get('/:id', idParam, validate, detail);
 router.get('/:id/stats', idParam, validate, stats);
 router.get('/:id/transactions', [...idParam, ...transactionsValidator], validate, listTransactions);

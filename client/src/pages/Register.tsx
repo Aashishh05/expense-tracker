@@ -1,7 +1,8 @@
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
+import { acceptGroupInvitation } from '@/api/groups';
 import { Button } from '@/components/ui/Button';
 import { Wallet as WalletIcon } from 'lucide-react';
 import { apiFieldErrors, apiMessage } from '@/utils/format';
@@ -11,6 +12,8 @@ type RegisterValues = { name: string; email: string; password: string; confirm: 
 export default function Register() {
   const { register: signUp } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const inviteToken = searchParams.get('invite');
 
   const {
     register,
@@ -23,6 +26,19 @@ export default function Register() {
   const onSubmit = handleSubmit(async (values) => {
     try {
       await signUp({ name: values.name.trim(), email: values.email.trim(), password: values.password });
+
+      // Arrived through a group invitation link: redeem it right away.
+      if (inviteToken) {
+        try {
+          const joined = await acceptGroupInvitation(inviteToken);
+          toast.success(joined.message ?? `You joined “${joined.data.name}”`);
+          navigate(`/groups/${joined.data._id}`, { replace: true });
+          return;
+        } catch (err) {
+          toast.error(apiMessage(err, 'Could not accept the group invitation'));
+        }
+      }
+
       toast.success('Account created — welcome!');
       navigate('/', { replace: true });
     } catch (err) {
@@ -44,6 +60,11 @@ export default function Register() {
           </span>
           <div>
             <h1 className="text-[22px] font-semibold tracking-tight">Create your account</h1>
+            {inviteToken && (
+              <p className="mt-1 text-[13px] text-ink-2">
+                You were invited to a shared group — sign up to accept it.
+              </p>
+            )}
           </div>
         </div>
 

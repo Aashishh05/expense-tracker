@@ -86,9 +86,12 @@ export const list = asyncHandler(async (req, res) => {
   });
 });
 
-/** Escapes one CSV field (commas, quotes, newlines). */
+/** Escapes one CSV field, and neutralizes spreadsheet formula injection. */
 function csvCell(value: unknown): string {
-  const text = value === null || value === undefined ? '' : String(value);
+  let text = value === null || value === undefined ? '' : String(value);
+  // Excel/Sheets execute a cell that starts with = + - @ (or a control char),
+  // so a crafted note could become a live formula in the exported file.
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
   return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 

@@ -30,8 +30,16 @@ export async function deleteGroup(id: string): Promise<void> {
   await client.delete(`/groups/${id}`);
 }
 
-export async function addGroupMember(id: string, email: string): Promise<{ data: Group }> {
+export async function addGroupMember(id: string, email: string): Promise<{ data: Group; message?: string }> {
   const { data } = await client.post(`/groups/${id}/members`, { email });
+  return data;
+}
+
+/** Redeems an emailed invitation token (bound to the signed-in email). */
+export async function acceptGroupInvitation(
+  invitationId: string
+): Promise<{ data: Group; message?: string }> {
+  const { data } = await client.post('/groups/invitations/accept', { invitationId });
   return data;
 }
 

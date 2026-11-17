@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
+import { acceptGroupInvitation } from '@/api/groups';
 import { Button } from '@/components/ui/Button';
 import { Wallet as WalletIcon, Eye as EyeIcon, EyeOff as EyeOffIcon } from 'lucide-react';
 import { apiFieldErrors, apiMessage } from '@/utils/format';
@@ -13,6 +14,8 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const inviteToken = searchParams.get('invite');
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -27,6 +30,19 @@ export default function Login() {
   const onSubmit = handleSubmit(async (values) => {
     try {
       await login(values.email.trim(), values.password);
+
+      // A pending group invitation in the URL is redeemed on sign-in.
+      if (inviteToken) {
+        try {
+          const joined = await acceptGroupInvitation(inviteToken);
+          toast.success(joined.message ?? `You joined “${joined.data.name}”`);
+          navigate(`/groups/${joined.data._id}`, { replace: true });
+          return;
+        } catch (err) {
+          toast.error(apiMessage(err, 'Could not accept the group invitation'));
+        }
+      }
+
       toast.success(`Welcome back!`);
       navigate(from, { replace: true });
     } catch (err) {

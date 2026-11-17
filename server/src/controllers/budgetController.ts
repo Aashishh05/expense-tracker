@@ -29,8 +29,9 @@ async function resolveExpenseCategory(
 // GET /api/budgets?month=2026-11&page=1&limit=10
 export const list = asyncHandler(async (req, res) => {
   const month = (req.query.month as string) || currentMonthKey();
-  const page = parseInt(req.query.page as string) || 1;
-  const limit = parseInt(req.query.limit as string) || 10;
+  // Clamped: an unchecked negative page would produce a negative skip.
+  const page = Math.min(Math.max(parseInt(req.query.page as string) || 1, 1), 10000);
+  const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 100);
   const skip = (page - 1) * limit;
   const range = monthRange(month);
   if (!range) {
